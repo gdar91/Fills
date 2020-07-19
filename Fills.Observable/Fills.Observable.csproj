@@ -8,10 +8,14 @@
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/gdar91/Fills</RepositoryUrl>
     <Version>0.0.1</Version>
-    <Description>Enumerable operators, that we miss in the standard library.</Description>
+    <Description>Observable operators, that we miss in the standard library.</Description>
     <Authors>Giorgi Darchiashvili</Authors>
     <Company />
     <Copyright>2019 Giorgi Darchiashvili</Copyright>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Reactive" Version="4.3.1" />
+  </ItemGroup>
 
 </Project>
