@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fills.Enumerable
+namespace Fills
 {
-    public static partial class EnumerableExtensions
+    public static partial class ExtensionsForEnumerable
     {
         public static IEnumerable<TElement[]> SequentialGroupBy<TElement>(
             this IEnumerable<TElement> source,

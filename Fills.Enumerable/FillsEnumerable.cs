@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Fills.Enumerable
+namespace Fills
 {
     public static class FillsEnumerable
     {

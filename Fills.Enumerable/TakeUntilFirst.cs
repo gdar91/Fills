@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Fills.Enumerable
+namespace Fills
 {
-    public static partial class EnumerableExtensions
+    public static partial class ExtensionsForEnumerable
     {
         public static IEnumerable<TElement> TakeUntilFirst<TElement>(
             this IEnumerable<TElement> source,

@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace Fills.Enumerable
+namespace Fills
 {
-    public static partial class EnumerableExtensions
+    public static partial class ExtensionsForEnumerable
     {
-        public static void ForEach<TElement>(this IEnumerable<TElement> source, Action<TElement> action)
+        public static void ForEach<TElement>(
+            this IEnumerable<TElement> source,
+            Action<TElement> action
+        )
         {
             foreach (var item in source)
             {

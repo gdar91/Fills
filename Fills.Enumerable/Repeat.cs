@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
-namespace Fills.Enumerable
+namespace Fills
 {
-    public static partial class EnumerableExtensions
+    public static partial class ExtensionsForEnumerable
     {
         public static IEnumerable<TElement> Repeat<TElement>(
             this IEnumerable<TElement> source,

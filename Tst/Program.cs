@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fills.Enumerable;
+using Fills;
 
 namespace Tst
 {
@@ -40,7 +40,7 @@ namespace Tst
                     ? $"-{BinaryRepresentation(-number)}"
                     : FillsEnumerable
                         .Unfold<int, int>(number, NextBit)
-                        .SwitchToIfEmpty(FillsEnumerable.Return(0))
+                        .EmptyCoalesce(FillsEnumerable.Return(0))
                         .Aggregate(string.Empty, (state, element) => $"{element}{state}");
 
             static bool NextBit(int number, out int nextBit, out int nextNumber)
@@ -78,8 +78,8 @@ namespace Tst
             Enumerable.Range(8, 3).ForEach(next => Console.WriteLine($"Joni: {next}"));
 
 
-            var r4 = new int[0].SwitchToIfEmpty(new [] { 103, 104 });
-            var r5 = new [] { 1000 }.SwitchToIfEmpty(new [] { 103, 104 });
+            var r4 = new int[0].EmptyCoalesce(new [] { 103, 104 });
+            var r5 = new [] { 1000 }.EmptyCoalesce(new [] { 103, 104 });
 
             System.Console.WriteLine(string.Join(", ", r4));
             System.Console.WriteLine(string.Join(", ", r5));
@@ -125,7 +125,7 @@ namespace Tst
                     return true;
                 })
                 // .Unfold(number, state => state == 0 ? default : Tuple.Create(state % 2, state / 2))
-                .SwitchToIfEmpty(FillsEnumerable.Return(0))
+                .EmptyCoalesce(FillsEnumerable.Return(0))
                 .Aggregate(string.Empty, (state, element) => $"{element}{state}");
 
 

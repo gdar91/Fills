@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
-namespace Fills.Enumerable
+namespace Fills
 {
-    public static partial class EnumerableExtensions
+    public static partial class ExtensionsForEnumerable
     {
         public delegate bool TrySelector<TElement, TProjection>(TElement element, out TProjection projection);
 

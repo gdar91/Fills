@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 
-namespace Fills.Enumerable
+namespace Fills
 {
-    public static partial class EnumerableExtensions
+    public static partial class ExtensionsForEnumerable
     {
-        public static IEnumerable<TElement> SwitchToIfEmpty<TElement>(
+        public static IEnumerable<TElement> EmptyCoalesce<TElement>(
             this IEnumerable<TElement> source,
             IEnumerable<TElement> secondary
         )
