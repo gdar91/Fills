@@ -7,7 +7,7 @@ namespace Fills
 {
     public static partial class ExtensionsForObservable
     {
-        public static IObservable<TElement> ReplayScoped<TElement>(
+        public static IConnectableObservable<TElement> ReplayScoped<TElement>(
             this IObservable<TElement> observable,
             int bufferSize
         )
