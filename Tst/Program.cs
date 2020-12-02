@@ -10,6 +10,8 @@ namespace Tst
     {
         static async Task Main(string[] args)
         {
+            await Task.Delay(10);
+
             FillsEnumerable
                 .Return(1)
                 .Expand(e => FillsEnumerable.Return(e * 2))

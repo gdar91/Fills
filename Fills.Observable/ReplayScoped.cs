@@ -23,6 +23,7 @@ namespace Fills
     }
 
 
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
     internal sealed class ConnectableObservable<TSource, TResult> : IConnectableObservable<TResult>
     {
         private readonly Func<ISubject<TSource, TResult>> _subjectFactory;
@@ -106,4 +107,5 @@ namespace Fills
             return _results.SubscribeSafe(observer);
         }
     }
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 }

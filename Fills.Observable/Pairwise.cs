@@ -16,5 +16,18 @@ namespace Fills
                 )
                 .Skip(1);
         }
+
+
+        public static IObservable<(TElement previous, TElement current)> Pairwise<TElement>(
+            this IObservable<TElement> source,
+            TElement initialElement
+        )
+        {
+            return source
+                .Scan(
+                    (default(TElement), initialElement),
+                    (state, element) => (state.Item2, element)
+                );
+        }
     }
 }
