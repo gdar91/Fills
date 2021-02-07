@@ -10,12 +10,13 @@ namespace Fills
             out TProjection projection
         );
 
+
         public static IObservable<TProjection> TrySelect<TElement, TProjection>(
             this IObservable<TElement> source,
             TrySelector<TElement, TProjection> trySelector
         )
         {
-            return System.Reactive.Linq.Observable.Create<TProjection>(observer =>
+            return Observable.Create<TProjection>(observer =>
                 source.Subscribe(
                     element =>
                     {

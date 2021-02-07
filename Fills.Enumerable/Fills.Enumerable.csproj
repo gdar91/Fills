@@ -6,7 +6,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/gdar91/Fills</RepositoryUrl>
-    <Version>0.0.9</Version>
+    <Version>0.0.91</Version>
     <Description>Enumerable operators, that are missing in the standard library.</Description>
     <Authors>Giorgi Darchiashvili</Authors>
     <Company />

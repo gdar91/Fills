@@ -3,7 +3,13 @@ using System.Collections.Concurrent;
 
 namespace Fills
 {
-    public sealed class Memo<TKey, TValue>
+    public interface IMemo<TKey, TValue>
+    {
+        TValue this[TKey key] { get; }
+    }
+
+
+    public sealed class Memo<TKey, TValue> : IMemo<TKey, TValue>
     {
         private readonly ConcurrentDictionary<TKey, TValue> dictionary =
             new ConcurrentDictionary<TKey, TValue>();

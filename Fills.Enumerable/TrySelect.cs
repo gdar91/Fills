@@ -1,10 +1,14 @@
+using System;
 using System.Collections.Generic;
 
 namespace Fills
 {
     public static partial class ExtensionsForEnumerable
     {
-        public delegate bool TrySelector<TElement, TProjection>(TElement element, out TProjection projection);
+        public delegate bool TrySelector<TElement, TProjection>(
+            TElement element,
+            out TProjection projection
+        );
 
 
         public static IEnumerable<TProjection> TrySelect<TElement, TProjection>(
