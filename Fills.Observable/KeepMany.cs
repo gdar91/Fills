@@ -66,14 +66,22 @@ namespace Fills
                 .Concat()
                 .GroupByUntil(
                     tuple => tuple.Item1,
-                    group => group.FirstAsync(tuple => !tuple.Item2)
+                    group =>
+                        group
+                            .Where(tuple => !tuple.Item2)
+                            .Take(1)
                 )
                 .SelectMany(group =>
                     group
-                        .FirstAsync(tuple => tuple.Item2)
+                        .Where(tuple => tuple.Item2)
+                        .Take(1)
                         .Select(tuple => observableSelector(tuple.Item1))
                         .Switch()
-                        .TakeUntil(group.FirstAsync(tuple => !tuple.Item2))
+                        .TakeUntil(
+                            group
+                                .Where(tuple => !tuple.Item2)
+                                .Take(1)
+                        )
                 );
         }
     }
