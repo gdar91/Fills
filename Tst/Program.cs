@@ -16,12 +16,12 @@ namespace Tst
                 .Return(1)
                 .Expand(e => FillsEnumerable.Return(e * 2))
                 .Take(10)
-                .Pipe(e => Console.WriteLine(string.Join(", ", e)));
+                .Let(e => Console.WriteLine(string.Join(", ", e)));
 
             FillsEnumerable
                 .From(10, 10)
                 .Expand(item => item > 0 ? FillsEnumerable.Return(item / 2) : Enumerable.Empty<int>())
-                .Pipe(e => Console.WriteLine(string.Join(", ", e)));
+                .Let(e => Console.WriteLine(string.Join(", ", e)));
 
             var e1 = new[] { "1", "joni", "2", "jimi", "magari", "10" };
             var r1 = e1.TrySelect<string, int>(int.TryParse);
@@ -57,7 +57,7 @@ namespace Tst
             System.Console.WriteLine($"-14 in binary: {BinaryRepresentation(-14)}");
 
 
-            fibonacci.Take(10).Pipe(e => string.Join(", ", e));
+            fibonacci.Take(10).Let(e => string.Join(", ", e));
 
 
 
@@ -136,8 +136,8 @@ namespace Tst
 
 
             new[] { 1, 2, 10 }
-                .Pipe(x => string.Join(", ", x)
-                .Pipe(Console.WriteLine));
+                .Let(x => string.Join(", ", x)
+                .Let(Console.WriteLine));
         }
     }
 }

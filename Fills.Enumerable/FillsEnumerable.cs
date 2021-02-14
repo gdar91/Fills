@@ -24,6 +24,16 @@ namespace Fills
 
 
 
+        public static IEnumerable<TElement> From<TElement>(Func<TElement> elementFactory)
+        {
+            var element = elementFactory();
+
+            yield return element;
+        }
+
+
+
+
         public static IEnumerable<TElement> Defer<TElement>(Func<IEnumerable<TElement>> factory)
         {
             var enumerable = factory();
