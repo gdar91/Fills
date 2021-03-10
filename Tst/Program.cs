@@ -16,12 +16,12 @@ namespace Tst
                 .Return(1)
                 .Expand(e => FillsEnumerable.Return(e * 2))
                 .Take(10)
-                .Let(e => Console.WriteLine(string.Join(", ", e)));
+                .Let(e => string.Join(", ", e));
 
             FillsEnumerable
                 .From(10, 10)
                 .Expand(item => item > 0 ? FillsEnumerable.Return(item / 2) : Enumerable.Empty<int>())
-                .Let(e => Console.WriteLine(string.Join(", ", e)));
+                .Let(e => string.Join(", ", e));
 
             var e1 = new[] { "1", "joni", "2", "jimi", "magari", "10" };
             var r1 = e1.TrySelect<string, int>(int.TryParse);
@@ -135,9 +135,7 @@ namespace Tst
 
 
 
-            new[] { 1, 2, 10 }
-                .Let(x => string.Join(", ", x)
-                .Let(Console.WriteLine));
+            new[] { 1, 2, 10 }.Let(x => string.Join(", ", x));
         }
     }
 }
