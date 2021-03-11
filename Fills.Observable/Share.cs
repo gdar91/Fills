@@ -6,14 +6,16 @@ namespace Fills
 {
     public static partial class ExtensionsForObservable
     {
-        public static IConnectableObservable<TElement> PublishResetting<TElement>(
+        public static IObservable<TElement> Share<TElement>(
             this IObservable<TElement> observable
         )
         {
             return
-                observable.Multicast(
-                    new ResettingSubject<TElement>(() => new Subject<TElement>())
-                );
+                observable
+                    .Multicast(
+                        new ResettingSubject<TElement>(() => new Subject<TElement>())
+                    )
+                    .RefCount();
         }
     }
 }
