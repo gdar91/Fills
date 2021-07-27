@@ -10,7 +10,12 @@ namespace Fills
 
         public static FSharpOption<T> None<T>() => FSharpOption<T>.None;
 
-        public static FSharpOption<T> None<T>(T witness) => FSharpOption<T>.None;
+        public static FSharpOption<T> None<T>(Hint<T> hint) => FSharpOption<T>.None;
+
+
+        public static Hint<FSharpOption<TElement>> Hint<TElement>(Hint<TElement> hint) => default;
+
+        public static Hint<TElement> Unhint<TElement>(Hint<FSharpOption<TElement>> hint) => default;
 
 
         public static FSharpOption<TResult> Zip<T1, T2, TResult>(

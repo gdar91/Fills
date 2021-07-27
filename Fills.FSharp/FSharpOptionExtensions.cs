@@ -7,6 +7,13 @@ namespace Fills
 {
     public static class FSharpOptionExtensions
     {
+        public static FSharpOption<T> NewSome<T>(this Hint<FSharpOption<T>> hint, T value) =>
+            FSharpOption<T>.Some(value);
+
+        public static FSharpOption<T> NewNone<T>(this Hint<FSharpOption<T>> hint) =>
+            FSharpOption<T>.None;
+
+
         public static bool TryGetValue<T>(this FSharpOption<T> option, out T value)
         {
             if (OptionModule.IsSome(option))

@@ -13,6 +13,28 @@ namespace Fills
 
 
 
+        public static IEnumerable<TElement> Empty<TElement>()
+        {
+            yield break;
+        }
+
+
+        public static IEnumerable<TElement> Empty<TElement>(Hint<TElement> hint)
+        {
+            yield break;
+        }
+
+
+
+
+        public static Hint<IEnumerable<TElement>> Hint<TElement>(Hint<TElement> hint) => default;
+
+
+        public static Hint<TElement> Unhint<TElement>(Hint<IEnumerable<TElement>> hint) => default;
+
+
+
+
         public static IEnumerable<TElement> From<TElement>(params TElement[] elements)
         {
             foreach (var item in elements)

@@ -5,18 +5,36 @@ namespace Fills
 {
     public static class FillsResult
     {
-        public static FSharpResult<T, TError> Ok<T, TError>(T value) =>
-            FSharpResult<T, TError>.NewOk(value);
+        public static FSharpResult<T, TError> Ok<T, TError>(T result) =>
+            FSharpResult<T, TError>.NewOk(result);
 
-        public static FSharpResult<T, TError> Ok<T, TError>(T value, TError errorWitness) =>
-            FSharpResult<T, TError>.NewOk(value);
+        public static FSharpResult<T, TError> Ok<T, TError>(T result, Hint<TError> errorHint) =>
+            FSharpResult<T, TError>.NewOk(result);
 
 
         public static FSharpResult<T, TError> Error<T, TError>(TError error) =>
             FSharpResult<T, TError>.NewError(error);
 
-        public static FSharpResult<T, TError> Error<T, TError>(TError error, T valueWitness) =>
+        public static FSharpResult<T, TError> Error<T, TError>(TError error, Hint<T> resultHint) =>
             FSharpResult<T, TError>.NewError(error);
+
+
+        public static Hint<FSharpResult<T, TError>> Hint<T, TError>(
+            Hint<T> resultHint,
+            Hint<TError> errorHint
+        )
+        {
+            return default;
+        }
+
+
+        public static Hint<TResult> Unhint<T, TError, TResult>(
+            Hint<FSharpResult<T, TError>> hint,
+            Func<Hint<T>, Hint<TError>, Hint<TResult>> func
+        )
+        {
+            return default;
+        }
 
 
         public static FSharpResult<TResult, TError> Zip<T1, T2, TError, TResult>(

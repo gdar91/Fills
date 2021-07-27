@@ -1,24 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net5.0;netstandard2.1;</TargetFrameworks>
-    <Nullable>Enable</Nullable>
+    <Nullable>enable</Nullable>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/gdar91/Fills</RepositoryUrl>
     <Version>0.0.99</Version>
-    <Description>F# operators, that are missing in the standard library.</Description>
+    <Description>C# type hinting engine.</Description>
     <Authors>Giorgi Darchiashvili</Authors>
     <Company />
     <Copyright>2021 Giorgi Darchiashvili</Copyright>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="5.0.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Fills.Hint\Fills.Hint.csproj" />
-  </ItemGroup>
 
 </Project>

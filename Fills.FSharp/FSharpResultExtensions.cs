@@ -7,6 +7,23 @@ namespace Fills
 {
     public static class FSharpResultExtensions
     {
+        public static FSharpResult<T, TError> NewOk<T, TError>(
+            this Hint<FSharpResult<T, TError>> hint,
+            T resultValue
+        )
+        {
+            return FSharpResult<T, TError>.NewOk(resultValue);
+        }
+
+        public static FSharpResult<T, TError> NewError<T, TError>(
+            this Hint<FSharpResult<T, TError>> hint,
+            TError resultValue
+        )
+        {
+            return FSharpResult<T, TError>.NewError(resultValue);
+        }
+
+
         public static bool TryGetValue<T, TError>(this FSharpResult<T, TError> result, out T value)
         {
             if (result.IsOk)
