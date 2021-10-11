@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -8,18 +8,12 @@
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/gdar91/Fills</RepositoryUrl>
     <Version>0.0.992</Version>
-    <Description>F# operators, that are missing in the standard library.</Description>
+    <Description>
+		Type hinting engine and IEnumerable operators, that are missing in the standard library.
+    </Description>
     <Authors>Giorgi Darchiashvili</Authors>
     <Company />
-    <Copyright>2021 Giorgi Darchiashvili</Copyright>
+    <Copyright>2019 Giorgi Darchiashvili</Copyright>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="5.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Fills.Core\Fills.Core.csproj" />
-  </ItemGroup>
 
 </Project>
