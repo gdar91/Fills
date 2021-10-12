@@ -29,10 +29,7 @@ public static partial class FillsObservableExtensions
     }
 
 
-    public static IObservable<TElement> ShareReplay<TElement>(
-        this IObservable<TElement> observable,
-        int bufferSize
-    )
+    public static IObservable<TElement> ShareReplay<TElement>(this IObservable<TElement> observable, int bufferSize)
     {
         return ShareCore(observable, () => new ReplaySubject<TElement>(bufferSize));
     }
@@ -47,10 +44,7 @@ public static partial class FillsObservableExtensions
     }
 
 
-    public static IObservable<TElement> ShareReplay<TElement>(
-        this IObservable<TElement> observable,
-        TimeSpan window
-    )
+    public static IObservable<TElement> ShareReplay<TElement>(this IObservable<TElement> observable, TimeSpan window)
     {
         return ShareCore(observable, () => new ReplaySubject<TElement>(window));
     }
