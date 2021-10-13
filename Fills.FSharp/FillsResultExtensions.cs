@@ -47,8 +47,8 @@ public static class FillsResultExtensions
     )
     {
         return result.Match(
-            value => FillsResult.Ok<TResult, TError>(selector(value)),
-            FillsResult.Error<TResult, TError>
+            value => FillsResult.Return<TResult, TError>(selector(value)),
+            FillsResult.Throw<TResult, TError>
         );
     }
 
@@ -58,7 +58,7 @@ public static class FillsResultExtensions
         Func<T, FSharpResult<TResult, TError>> selector
     )
     {
-        return result.Match(selector, FillsResult.Error<TResult, TError>);
+        return result.Match(selector, FillsResult.Throw<TResult, TError>);
     }
 
 
@@ -70,7 +70,7 @@ public static class FillsResultExtensions
     {
         return result.Match(
             value => collectionSelector(value).Select(collection => resultSelector(value, collection)),
-            FillsResult.Error<TResult, TError>
+            FillsResult.Throw<TResult, TError>
         );
     }
 }

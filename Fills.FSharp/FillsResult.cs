@@ -4,15 +4,15 @@ namespace Fills;
 
 public static class FillsResult
 {
-    public static FSharpResult<T, TError> Ok<T, TError>(T result) => FSharpResult<T, TError>.NewOk(result);
+    public static FSharpResult<T, TError> Return<T, TError>(T result) => FSharpResult<T, TError>.NewOk(result);
 
-    public static FSharpResult<T, TError> Ok<T, TError>(T result, Hint<TError> errorHint) =>
+    public static FSharpResult<T, TError> Return<T, TError>(T result, Hint<TError> errorHint) =>
         FSharpResult<T, TError>.NewOk(result);
 
 
-    public static FSharpResult<T, TError> Error<T, TError>(TError error) => FSharpResult<T, TError>.NewError(error);
+    public static FSharpResult<T, TError> Throw<T, TError>(TError error) => FSharpResult<T, TError>.NewError(error);
 
-    public static FSharpResult<T, TError> Error<T, TError>(TError error, Hint<T> resultHint) =>
+    public static FSharpResult<T, TError> Throw<T, TError>(TError error, Hint<T> resultHint) =>
         FSharpResult<T, TError>.NewError(error);
 
 

@@ -27,6 +27,18 @@ public static class FillsObservable
     public static IObservable<TElement> Never<TElement>(Hint<TElement> hint) => Observable.Never<TElement>();
 
 
+    public static IObservable<TElement> Throw<TElement>(Exception error) => Observable.Throw<TElement>(error);
+
+    public static IObservable<TElement> Throw<TElement>(Exception error, Hint<TElement> hint) =>
+        Observable.Throw<TElement>(error);
+
+    public static IObservable<TElement> Throw<TElement>(Exception error, IScheduler scheduler) =>
+        Observable.Throw<TElement>(error, scheduler);
+
+    public static IObservable<TElement> Throw<TElement>(Exception error, IScheduler scheduler, Hint<TElement> hint) =>
+        Observable.Throw<TElement>(error, scheduler);
+
+
     public static IObservable<TElement> FromAsyncEnumerable<TElement>(
         Func<CancellationToken, IAsyncEnumerable<TElement>> asyncEnumerableFunc
     )
