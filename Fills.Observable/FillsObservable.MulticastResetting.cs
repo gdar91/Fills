@@ -11,7 +11,11 @@ public static partial class FillsObservableExtensions
         Func<ISubject<TElement>> subjectFactory
     )
     {
-        return observable.Multicast(new ResettingSubject<TElement>(subjectFactory));
+        return
+            new ConnectableObservable<TElement, TElement>(
+                observable,
+                () => new ResettingSubject<TElement>(subjectFactory)
+            );
     }
 
 
