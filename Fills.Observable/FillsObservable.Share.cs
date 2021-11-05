@@ -13,7 +13,42 @@ public static partial class FillsObservableExtensions
     {
         return observable
             .Multicast(new ResettingSubject<TElement>(subjectFactory))
-            .RefCount(1, TimeSpan.Zero, ImmediateScheduler.Instance);
+            .RefCount(1, TimeSpan.Zero, ImmediateScheduler.Instance)
+            .Let(observable =>
+                Observable.Create<TElement>(observer =>
+                {
+                    IDisposable? subscription = null;
+
+                    subscription =
+                        observable.Subscribe(
+                            observer.OnNext,
+                            error =>
+                            {
+                                try
+                                {
+                                    subscription?.Dispose();
+                                }
+                                catch
+                                { }
+
+                                observer.OnError(error);
+                            },
+                            () =>
+                            {
+                                try
+                                {
+                                    subscription?.Dispose();
+                                }
+                                catch
+                                { }
+
+                                observer.OnCompleted();
+                            }
+                        );
+
+                    return subscription;
+                })
+            );
     }
 
 
