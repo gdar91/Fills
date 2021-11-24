@@ -11,8 +11,13 @@ public static partial class FillsObservableExtensions
         Func<ISubject<TElement>> subjectFactory
     )
     {
-        return observable
-            .Multicast(new ResettingSubject<TElement>(subjectFactory))
+        var connectableObservable =
+            new ConnectableObservable<TElement, TElement>(
+                observable,
+                () => new ResettingSubject<TElement>(subjectFactory)
+            );
+
+        return connectableObservable
             .RefCount(1, TimeSpan.Zero, ImmediateScheduler.Instance)
             .Let(observable =>
                 Observable.Create<TElement>(observer =>
