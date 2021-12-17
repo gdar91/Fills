@@ -25,7 +25,7 @@ public static class FillsMap
         return default;
     }
 
-    public static Hint<TResult> Unhint<TKey, TValue, TResult>(
+    public static Hint<TResult> UnHint<TKey, TValue, TResult>(
         Hint<FSharpMap<TKey, TValue>> hint,
         Func<Hint<TKey>, Hint<TValue>, Hint<TResult>> func
     )

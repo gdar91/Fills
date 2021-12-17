@@ -21,5 +21,5 @@ public static class FillsEnumerable
 
     public static Hint<IEnumerable<TElement>> Hint<TElement>(Hint<TElement> hint) => default;
 
-    public static Hint<TElement> Unhint<TElement>(Hint<IEnumerable<TElement>> hint) => default;
+    public static Hint<TElement> UnHint<TElement>(Hint<IEnumerable<TElement>> hint) => default;
 }

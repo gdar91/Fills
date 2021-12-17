@@ -55,5 +55,5 @@ public static class FillsObservable
 
     public static Hint<IObservable<TElement>> Hint<TElement>(Hint<TElement> hint) => default;
 
-    public static Hint<TElement> Unhint<TElement>(Hint<IObservable<TElement>> hint) => default;
+    public static Hint<TElement> UnHint<TElement>(Hint<IObservable<TElement>> hint) => default;
 }

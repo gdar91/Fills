@@ -14,5 +14,5 @@ public static class FillsSet
 
     public static Hint<T> Hint<T>(Hint<FSharpSet<T>> hint) => default;
 
-    public static Hint<FSharpSet<T>> Unhint<T>(Hint<T> hint) => default;
+    public static Hint<FSharpSet<T>> UnHint<T>(Hint<T> hint) => default;
 }

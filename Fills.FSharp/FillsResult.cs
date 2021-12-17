@@ -26,7 +26,7 @@ public static class FillsResult
         return default;
     }
 
-    public static Hint<TResult> Unhint<T, TError, TResult>(
+    public static Hint<TResult> UnHint<T, TError, TResult>(
         Hint<FSharpResult<T, TError>> hint,
         Func<Hint<T>, Hint<TError>, Hint<TResult>> func
     )

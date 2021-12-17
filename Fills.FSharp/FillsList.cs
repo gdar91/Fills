@@ -14,5 +14,5 @@ public static class FillsList
 
     public static Hint<FSharpList<T>> Hint<T>(Hint<T> hint) => default;
 
-    public static Hint<T> Unhint<T>(Hint<FSharpList<T>> hint) => default;
+    public static Hint<T> UnHint<T>(Hint<FSharpList<T>> hint) => default;
 }

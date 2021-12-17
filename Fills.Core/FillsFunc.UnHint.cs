@@ -2,10 +2,10 @@
 
 public static partial class FillsFunc
 {
-    public static Hint<TResult> Unhint<TResult>(Hint<Func<TResult>> hint) => default;
+    public static Hint<TResult> UnHint<TResult>(Hint<Func<TResult>> hint) => default;
 
     public static Hint<TValue>
-        Unhint<T, TResult, TValue>(
+        UnHint<T, TResult, TValue>(
             Hint<Func<T, TResult>> hint,
             Func<
                 Hint<T>,
@@ -15,7 +15,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, TResult, TValue>(
+        UnHint<T1, T2, TResult, TValue>(
             Hint<Func<T1, T2, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>,
@@ -25,7 +25,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, TResult, TValue>(
+        UnHint<T1, T2, T3, TResult, TValue>(
             Hint<Func<T1, T2, T3, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>,
@@ -35,7 +35,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -45,7 +45,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -56,7 +56,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -67,7 +67,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -78,7 +78,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -89,7 +89,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -101,7 +101,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -113,7 +113,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -125,7 +125,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -137,7 +137,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -150,7 +150,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -163,7 +163,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,
@@ -176,7 +176,7 @@ public static partial class FillsFunc
         ) => default;
 
     public static Hint<TValue>
-        Unhint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult, TValue>(
+        UnHint<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult, TValue>(
             Hint<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult>> hint,
             Func<
                 Hint<T1>, Hint<T2>, Hint<T3>, Hint<T4>,

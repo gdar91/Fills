@@ -12,5 +12,5 @@ public static class FillsArray
 
     public static Hint<TElement[]> Hint<TElement>(Hint<TElement> hint) => default;
 
-    public static Hint<TElement> Unhint<TElement>(Hint<TElement[]> hint) => default;
+    public static Hint<TElement> UnHint<TElement>(Hint<TElement[]> hint) => default;
 }

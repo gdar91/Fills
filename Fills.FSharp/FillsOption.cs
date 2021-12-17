@@ -14,5 +14,5 @@ public static class FillsOption
 
     public static Hint<FSharpOption<TElement>> Hint<TElement>(Hint<TElement> hint) => default;
 
-    public static Hint<TElement> Unhint<TElement>(Hint<FSharpOption<TElement>> hint) => default;
+    public static Hint<TElement> UnHint<TElement>(Hint<FSharpOption<TElement>> hint) => default;
 }
