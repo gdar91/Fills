@@ -1,5 +1,4 @@
 ﻿using System.Reactive.Concurrency;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 
 namespace Fills;
@@ -15,12 +14,11 @@ public static partial class FillsObservableExtensions
         {
             var subscription = observable.Subscribe(observer);
 
-            return Disposable.Create(() =>
+            return () =>
                 Observable
                     .Timer(dueTime)
                     .Finally(subscription.Dispose)
-                    .Subscribe()
-            );
+                    .Subscribe();
         });
     }
 
@@ -34,12 +32,11 @@ public static partial class FillsObservableExtensions
         {
             var subscription = observable.Subscribe(observer);
 
-            return Disposable.Create(() =>
+            return () =>
                 Observable
                     .Timer(dueTime)
                     .Finally(subscription.Dispose)
-                    .Subscribe()
-            );
+                    .Subscribe();
         });
     }
 
@@ -54,12 +51,11 @@ public static partial class FillsObservableExtensions
         {
             var subscription = observable.Subscribe(observer);
 
-            return Disposable.Create(() =>
+            return () =>
                 Observable
                     .Timer(dueTime, scheduler)
                     .Finally(subscription.Dispose)
-                    .Subscribe()
-            );
+                    .Subscribe();
         });
     }
 
@@ -74,12 +70,11 @@ public static partial class FillsObservableExtensions
         {
             var subscription = observable.Subscribe(observer);
 
-            return Disposable.Create(() =>
+            return () =>
                 Observable
                     .Timer(dueTime, scheduler)
                     .Finally(subscription.Dispose)
-                    .Subscribe()
-            );
+                    .Subscribe();
         });
     }
 }

@@ -41,7 +41,7 @@ public static class FillsObservable
         {
             var asyncEnumerable = asyncEnumerableFunc(cancellationToken);
 
-            await foreach (var item in asyncEnumerable)
+            await foreach (var item in asyncEnumerable.WithCancellation(cancellationToken))
             {
                 observer.OnNext(item);
             }

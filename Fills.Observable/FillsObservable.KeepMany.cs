@@ -8,7 +8,7 @@ public static partial class FillsObservableExtensions
         this IObservable<IEnumerable<IObservable<TElement>>> observable
     )
     {
-        return KeepMany(observable, element => element, element => element);
+        return KeepMany(observable, static element => element, static element => element);
     }
 
 
@@ -17,7 +17,7 @@ public static partial class FillsObservableExtensions
         Func<TElement, IObservable<TResult>> observableSelector
     )
     {
-        return KeepMany(observable, element => element, observableSelector);
+        return KeepMany(observable, static element => element, observableSelector);
     }
 
 
@@ -31,44 +31,46 @@ public static partial class FillsObservableExtensions
             .Scan(
                 new
                 {
+                    KeySelector = keySelector,
                     Set = new HashSet<TKey>(),
                     ItemsRemoved = new HashSet<TKey>(),
                     ItemsAdded = new HashSet<TKey>()
                 },
-                (state, element) => (state.Set, element.Select(keySelector).ToHashSet()) switch
+                static (state, element) => (state.Set, element.Select(state.KeySelector).ToHashSet()) switch
                 {
                     var (previousSet, currentSet) => new
                     {
+                        state.KeySelector,
                         Set = currentSet,
                         ItemsRemoved = previousSet.Except(currentSet).ToHashSet(),
                         ItemsAdded = currentSet.Except(previousSet).ToHashSet()
                     }
                 }
             )
-            .Where(state => (state.ItemsRemoved.Count + state.ItemsAdded.Count) > 0)
-            .Select(state =>
+            .Where(static state => state.ItemsRemoved.Count + state.ItemsAdded.Count > 0)
+            .Select(static state =>
                 Observable.Concat(
-                    state.ItemsRemoved.Select(itemRemoved => (itemRemoved, false)).ToObservable(),
-                    state.ItemsAdded.Select(itemAdded => (itemAdded, true)).ToObservable()
+                    state.ItemsRemoved.Select(static itemRemoved => (itemRemoved, false)).ToObservable(),
+                    state.ItemsAdded.Select(static itemAdded => (itemAdded, true)).ToObservable()
                 )
             )
             .Concat()
             .GroupByUntil(
-                tuple => tuple.Item1,
-                group =>
+                static tuple => tuple.Item1,
+                static group =>
                     group
-                        .Where(tuple => !tuple.Item2)
+                        .Where(static tuple => !tuple.Item2)
                         .Take(1)
             )
             .SelectMany(group =>
                 group
-                    .Where(tuple => tuple.Item2)
+                    .Where(static tuple => tuple.Item2)
                     .Take(1)
                     .Select(tuple => observableSelector(tuple.Item1))
                     .Switch()
                     .TakeUntil(
                         group
-                            .Where(tuple => !tuple.Item2)
+                            .Where(static tuple => !tuple.Item2)
                             .Take(1)
                     )
             );

@@ -12,10 +12,10 @@ public static partial class FillsObservableExtensions
     {
         var channel = Channel.CreateUnbounded<T>();
 
-        var task = Task.Run(() =>
-            observable
+        _ = Task.Run(
+            () => observable
                 .Do(
-                    next => { },
+                    static next => { },
                     error => channel.Writer.Complete(error),
                     () => channel.Writer.Complete()
                 )
@@ -28,7 +28,8 @@ public static partial class FillsObservableExtensions
                 )
                 .Concat()
                 .Finally(() => channel.Writer.Complete())
-                .RunAsync(cancellationToken)
+                .RunAsync(cancellationToken),
+            cancellationToken
         );
 
         return channel.Reader;
