@@ -7,54 +7,106 @@ namespace Fills;
 public static partial class FillsObservableExtensions
 {
     private static IObservable<TElement> ShareCore<TElement>(
-        IObservable<TElement> observable,
+        this IObservable<TElement> observable,
         Func<ISubject<TElement>> subjectFactory
     )
     {
-        return observable
-            .Multicast(new ResettingSubject<TElement>(subjectFactory))
-            .RefCount();
+        var connectableObservable =
+            new ConnectableObservable<TElement, TElement>(
+                observable,
+                () => new ResettingSubject<TElement>(subjectFactory)
+            );
+
+        return connectableObservable
+            .RefCount(1, TimeSpan.Zero, ImmediateScheduler.Instance)
+            .Let(observable =>
+                Observable.Create<TElement>(observer =>
+                {
+                    IDisposable? subscription = null;
+
+                    subscription =
+                        observable.Subscribe(
+                            observer.OnNext,
+                            error =>
+                            {
+                                try
+                                {
+                                    subscription?.Dispose();
+                                }
+                                catch
+                                { }
+
+                                observer.OnError(error);
+                            },
+                            () =>
+                            {
+                                try
+                                {
+                                    subscription?.Dispose();
+                                }
+                                catch
+                                { }
+
+                                observer.OnCompleted();
+                            }
+                        );
+
+                    return subscription;
+                })
+            );
     }
 
 
-    public static IObservable<TElement> Share<TElement>(this IObservable<TElement> observable)
+
+
+    public static IObservable<TElement> Share<TElement>(
+        this IObservable<TElement> observable
+    )
     {
-        return ShareCore(observable, () => new Subject<TElement>());
+        return observable.ShareCore(() => new Subject<TElement>());
     }
 
-
-    public static IObservable<TElement> ShareReplay<TElement>(this IObservable<TElement> observable)
+    public static IObservable<TElement> Share<TElement>(
+        this IObservable<TElement> observable,
+        TElement initialValue
+    )
     {
-        return ShareCore(observable, () => new ReplaySubject<TElement>());
+        return observable.ShareCore(() => new BehaviorSubject<TElement>(initialValue));
     }
 
+
+
+
+    public static IObservable<TElement> ShareReplay<TElement>(
+        this IObservable<TElement> observable
+    )
+    {
+        return observable.ShareCore(() => new ReplaySubject<TElement>());
+    }
 
     public static IObservable<TElement> ShareReplay<TElement>(
         this IObservable<TElement> observable,
         int bufferSize
     )
     {
-        return ShareCore(observable, () => new ReplaySubject<TElement>(bufferSize));
+        return observable.ShareCore(() => new ReplaySubject<TElement>(bufferSize));
     }
-
 
     public static IObservable<TElement> ShareReplay<TElement>(
         this IObservable<TElement> observable,
         IScheduler scheduler
     )
     {
-        return ShareCore(observable, () => new ReplaySubject<TElement>(scheduler));
+        return observable.ShareCore(() => new ReplaySubject<TElement>(scheduler));
     }
-
 
     public static IObservable<TElement> ShareReplay<TElement>(
         this IObservable<TElement> observable,
         TimeSpan window
     )
     {
-        return ShareCore(observable, () => new ReplaySubject<TElement>(window));
+        return observable.ShareCore(() => new ReplaySubject<TElement>(window));
     }
-
 
     public static IObservable<TElement> ShareReplay<TElement>(
         this IObservable<TElement> observable,
@@ -62,9 +114,8 @@ public static partial class FillsObservableExtensions
         IScheduler scheduler
     )
     {
-        return ShareCore(observable, () => new ReplaySubject<TElement>(bufferSize, scheduler));
+        return observable.ShareCore(() => new ReplaySubject<TElement>(bufferSize, scheduler));
     }
-
 
     public static IObservable<TElement> ShareReplay<TElement>(
         this IObservable<TElement> observable,
@@ -72,9 +123,8 @@ public static partial class FillsObservableExtensions
         TimeSpan window
     )
     {
-        return ShareCore(observable, () => new ReplaySubject<TElement>(bufferSize, window));
+        return observable.ShareCore(() => new ReplaySubject<TElement>(bufferSize, window));
     }
-
 
     public static IObservable<TElement> ShareReplay<TElement>(
         this IObservable<TElement> observable,
@@ -82,9 +132,8 @@ public static partial class FillsObservableExtensions
         IScheduler scheduler
     )
     {
-        return ShareCore(observable, () => new ReplaySubject<TElement>(window, scheduler));
+        return observable.ShareCore(() => new ReplaySubject<TElement>(window, scheduler));
     }
-
 
     public static IObservable<TElement> ShareReplay<TElement>(
         this IObservable<TElement> observable,
@@ -93,6 +142,6 @@ public static partial class FillsObservableExtensions
         IScheduler scheduler
     )
     {
-        return ShareCore(observable, () => new ReplaySubject<TElement>(bufferSize, window, scheduler));
+        return observable.ShareCore(() => new ReplaySubject<TElement>(bufferSize, window, scheduler));
     }
 }

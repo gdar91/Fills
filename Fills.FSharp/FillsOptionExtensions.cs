@@ -4,11 +4,9 @@ namespace Fills;
 
 public static class FillsOptionExtensions
 {
-    public static FSharpOption<T> NewSome<T>(this Hint<FSharpOption<T>> hint, T value) =>
-        FSharpOption<T>.Some(value);
+    public static FSharpOption<T> NewSome<T>(this Hint<FSharpOption<T>> hint, T value) => FSharpOption<T>.Some(value);
 
-    public static FSharpOption<T> NewNone<T>(this Hint<FSharpOption<T>> hint) =>
-        FSharpOption<T>.None;
+    public static FSharpOption<T> NewNone<T>(this Hint<FSharpOption<T>> hint) => FSharpOption<T>.None;
 
 
     public static bool TryGetValue<T>(this FSharpOption<T> option, out T value)
@@ -32,9 +30,7 @@ public static class FillsOptionExtensions
         Func<TResult> whenNone
     )
     {
-        return option.TryGetValue(out var value)
-            ? whenSome(value)
-            : whenNone();
+        return option.TryGetValue(out var value) ? whenSome(value) : whenNone();
     }
 
 
@@ -44,32 +40,19 @@ public static class FillsOptionExtensions
         TResult whenNoneValue
     )
     {
-        return option.TryGetValue(out var value)
-            ? whenSome(value)
-            : whenNoneValue;
+        return option.TryGetValue(out var value) ? whenSome(value) : whenNoneValue;
     }
 
 
-    public static T ValueOrDefault<T>(this FSharpOption<T> option, T defaultValue)
-    {
-        return option.TryGetValue(out var value)
-            ? value
-            : defaultValue;
-    }
+    public static T ValueOrDefault<T>(this FSharpOption<T> option, T defaultValue) =>
+        option.TryGetValue(out var value) ? value : defaultValue;
 
 
-    public static T ValueOrDefault<T>(this FSharpOption<T> option, Func<T> defaultValueFactory)
-    {
-        return option.TryGetValue(out var value)
-            ? value
-            : defaultValueFactory();
-    }
+    public static T ValueOrDefault<T>(this FSharpOption<T> option, Func<T> defaultValueFactory) =>
+        option.TryGetValue(out var value) ? value : defaultValueFactory();
 
 
-    public static FSharpOption<TResult> Select<T, TResult>(
-        this FSharpOption<T> option,
-        Func<T, TResult> selector
-    )
+    public static FSharpOption<TResult> Select<T, TResult>(this FSharpOption<T> option, Func<T, TResult> selector)
     {
         return option.TryGetValue(out var value)
             ? FSharpOption<TResult>.Some(selector(value))
@@ -82,9 +65,7 @@ public static class FillsOptionExtensions
         Func<T, FSharpOption<TResult>> selector
     )
     {
-        return option.TryGetValue(out var value)
-            ? selector(value)
-            : FSharpOption<TResult>.None;
+        return option.TryGetValue(out var value) ? selector(value) : FSharpOption<TResult>.None;
     }
 
 
