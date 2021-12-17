@@ -13,7 +13,7 @@ public static class FillsVOptionExtensions
 
     public static bool TryGetValue<T>(this FSharpValueOption<T> option, out T value)
     {
-        if (ValueOption.IsNone(option))
+        if (option.IsNone)
         {
             value = default!;
 
@@ -32,7 +32,17 @@ public static class FillsVOptionExtensions
         Func<TResult> whenNone
     )
     {
-        return option.TryGetValue(out var value) ? whenSome(value) : whenNone();
+        return option.IsSome ? whenSome(option.Value) : whenNone();
+    }
+    
+    public static TResult Match<TState, T, TResult>(
+        this FSharpValueOption<T> option,
+        TState state,
+        Func<TState, T, TResult> whenSome,
+        Func<TState, TResult> whenNone
+    )
+    {
+        return option.IsSome ? whenSome(state, option.Value) : whenNone(state);
     }
 
 
@@ -42,16 +52,26 @@ public static class FillsVOptionExtensions
         TResult whenNoneValue
     )
     {
-        return option.TryGetValue(out var value) ? whenSome(value) : whenNoneValue;
+        return option.IsSome ? whenSome(option.Value) : whenNoneValue;
+    }
+    
+    public static TResult Match<TState, T, TResult>(
+        this FSharpValueOption<T> option,
+        TState state,
+        Func<TState, T, TResult> whenSome,
+        TResult whenNoneValue
+    )
+    {
+        return option.IsSome ? whenSome(state, option.Value) : whenNoneValue;
     }
 
 
     public static T ValueOrDefault<T>(this FSharpValueOption<T> option, T defaultValue) =>
-        option.TryGetValue(out var value) ? value : defaultValue;
+        option.IsSome ? option.Value : defaultValue;
 
 
     public static T ValueOrDefault<T>(this FSharpValueOption<T> option, Func<T> defaultValueFactory) =>
-        option.TryGetValue(out var value) ? value : defaultValueFactory();
+        option.IsSome ? option.Value : defaultValueFactory();
 
 
     public static FSharpValueOption<TResult> Select<T, TResult>(
@@ -59,8 +79,19 @@ public static class FillsVOptionExtensions
         Func<T, TResult> selector
     )
     {
-        return option.TryGetValue(out var value)
-            ? FSharpValueOption<TResult>.NewValueSome(selector(value))
+        return option.IsSome
+            ? FSharpValueOption<TResult>.NewValueSome(selector(option.Value))
+            : FSharpValueOption<TResult>.ValueNone;
+    }
+    
+    public static FSharpValueOption<TResult> Select<TState, T, TResult>(
+        this FSharpValueOption<T> option,
+        TState state,
+        Func<TState, T, TResult> selector
+    )
+    {
+        return option.IsSome
+            ? FSharpValueOption<TResult>.NewValueSome(selector(state, option.Value))
             : FSharpValueOption<TResult>.ValueNone;
     }
 
@@ -70,7 +101,20 @@ public static class FillsVOptionExtensions
         Func<T, FSharpValueOption<TResult>> selector
     )
     {
-        return option.TryGetValue(out var value) ? selector(value) : FSharpValueOption<TResult>.None;
+        return option.IsSome
+            ? selector(option.Value)
+            : FSharpValueOption<TResult>.ValueNone;
+    }
+    
+    public static FSharpValueOption<TResult> SelectMany<TState, T, TResult>(
+        this FSharpValueOption<T> option,
+        TState state,
+        Func<TState, T, FSharpValueOption<TResult>> selector
+    )
+    {
+        return option.IsSome
+            ? selector(state, option.Value)
+            : FSharpValueOption<TResult>.ValueNone;
     }
 
 
@@ -80,8 +124,16 @@ public static class FillsVOptionExtensions
         Func<T, TCollection, TResult> resultSelector
     )
     {
-        return option.TryGetValue(out var value)
-            ? collectionSelector(value).Select(collection => resultSelector(value, collection))
+        if (option.IsNone)
+        {
+            return FSharpValueOption<TResult>.ValueNone;
+        }
+
+        var value = option.Value;
+        var collectionOption = collectionSelector(value);
+        
+        return collectionOption.IsSome
+            ? FSharpValueOption<TResult>.NewValueSome(resultSelector(value, collectionOption.Value))
             : FSharpValueOption<TResult>.ValueNone;
     }
 }

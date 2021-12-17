@@ -9,6 +9,6 @@ public static partial class FillsObservableExtensions
         Hint<TResult> resultHint
     )
     {
-        return source.IgnoreElements().Select(_ => default(TResult)!);
+        return source.IgnoreElements().Select(static _ => default(TResult)!);
     }
 }

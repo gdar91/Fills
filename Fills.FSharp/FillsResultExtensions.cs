@@ -9,10 +9,10 @@ public static class FillsResultExtensions
 
     public static FSharpResult<T, TError> NewError<T, TError>(
         this Hint<FSharpResult<T, TError>> hint,
-        TError resultValue
+        TError errorValue
     )
     {
-        return FSharpResult<T, TError>.NewError(resultValue);
+        return FSharpResult<T, TError>.NewError(errorValue);
     }
 
 
@@ -47,9 +47,7 @@ public static class FillsResultExtensions
         Func<TState, TError, TResult> whenError
     )
     {
-        return result.IsOk
-            ? whenOk(state, result.ResultValue)
-            : whenError(state, result.ErrorValue);
+        return result.IsOk ? whenOk(state, result.ResultValue) : whenError(state, result.ErrorValue);
     }
 
 
@@ -59,8 +57,8 @@ public static class FillsResultExtensions
     )
     {
         return result.IsOk
-            ? FillsResult.Ok<TResult, TError>(selector(result.ResultValue))
-            : FillsResult.Error<TResult, TError>(result.ErrorValue);
+            ? FSharpResult<TResult, TError>.NewOk(selector(result.ResultValue))
+            : FSharpResult<TResult, TError>.NewError(result.ErrorValue);
     }
     
     public static FSharpResult<TResult, TError> Select<TState, T, TError, TResult>(
@@ -70,8 +68,8 @@ public static class FillsResultExtensions
     )
     {
         return result.IsOk
-            ? FillsResult.Ok<TResult, TError>(selector(state, result.ResultValue))
-            : FillsResult.Error<TResult, TError>(result.ErrorValue);
+            ? FSharpResult<TResult, TError>.NewOk(selector(state, result.ResultValue))
+            : FSharpResult<TResult, TError>.NewError(result.ErrorValue);
     }
 
 
@@ -82,7 +80,7 @@ public static class FillsResultExtensions
     {
         return result.IsOk
             ? selector(result.ResultValue)
-            : FillsResult.Error<TResult, TError>(result.ErrorValue);
+            : FSharpResult<TResult, TError>.NewError(result.ErrorValue);
     }
     
     public static FSharpResult<TResult, TError> SelectMany<TState, T, TError, TResult>(
@@ -93,7 +91,7 @@ public static class FillsResultExtensions
     {
         return result.IsOk
             ? selector(state, result.ResultValue)
-            : FillsResult.Error<TResult, TError>(result.ErrorValue);
+            : FSharpResult<TResult, TError>.NewError(result.ErrorValue);
     }
 
 
@@ -105,14 +103,14 @@ public static class FillsResultExtensions
     {
         if (result.IsError)
         {
-            return FillsResult.Error<TResult, TError>(result.ErrorValue);
+            return FSharpResult<TResult, TError>.NewError(result.ErrorValue);
         }
 
         var value = result.ResultValue;
         var collectionResult = collectionSelector(value);
         
         return collectionResult.IsOk
-            ? FillsResult.Ok<TResult, TError>(resultSelector(value, collectionResult.ResultValue))
-            : FillsResult.Error<TResult, TError>(collectionResult.ErrorValue);
+            ? FSharpResult<TResult, TError>.NewOk(resultSelector(value, collectionResult.ResultValue))
+            : FSharpResult<TResult, TError>.NewError(collectionResult.ErrorValue);
     }
 }
