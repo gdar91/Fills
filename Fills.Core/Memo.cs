@@ -2,7 +2,7 @@
 
 namespace Fills;
 
-public interface IMemo<TKey, TValue>
+public interface IMemo<in TKey, out TValue>
 {
     TValue this[TKey key] { get; }
 }
