@@ -1,4 +1,5 @@
 using System.Reactive;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -15,11 +16,15 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
 
     private readonly TimeSpan disconnectDelay;
 
+    private readonly IScheduler disconnectScheduler;
+
     private readonly object gate;
 
     private readonly BehaviorSubject<ISubject<TValue>> subjects;
 
     private readonly IObservable<TValue> results;
+
+    private readonly IObservable<TValue> observable;
 
 
     private State state;
@@ -29,57 +34,109 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
         IObservable<TValue> source,
         TSubjectState subjectState,
         Func<TSubjectState, ISubject<TValue>> subjectFactory,
-        TimeSpan disconnectDelay
+        TimeSpan disconnectDelay,
+        IScheduler disconnectScheduler
     )
     {
         this.source = source;
         this.subjectState = subjectState;
         this.subjectFactory = subjectFactory;
         this.disconnectDelay = disconnectDelay;
+        this.disconnectScheduler = disconnectScheduler;
+
         gate = new();
         subjects = new(CreateNewSubject());
         results = subjects.Switch();
+        observable = Observable.Using(SubscriptionResource, _ => results);
+
         state = State.Initial;
     }
+
+
+    public IDisposable Subscribe(IObserver<TValue> observer) => observable.SubscribeSafe(observer);
 
 
     private ISubject<TValue> CreateNewSubject() => subjectFactory(subjectState);
 
 
-    public IDisposable Subscribe(IObserver<TValue> observer)
+    private IDisposable SubscriptionResource()
     {
-        var subscription = Observable.Using(SubscriptionResource, _ => results).SubscribeSafe(observer);
-
         lock (gate)
         {
             switch (state)
             {
                 case { IsInitial: true }:
-                {
-                    var connection = Connect();
-                    state = State.Connected(1L, connection, false);
-                }
+                    state = State.Connected(1L, Connect(), false);
                     break;
 
                 case var s when s.IsConnected(out var subscriptions, out var connection, out var instantDisconnect):
-                {
                     state = State.Connected(subscriptions + 1L, connection, instantDisconnect);
-                }
                     break;
 
-                case var s when s.IsDisconnecting(out var connection, out var cancellationTokenSource):
-                {
+                case var s when s.IsDisconnecting(out var connection, out var disconnectionResource):
                     state = State.Connected(1L, connection, false);
-                    cancellationTokenSource.Cancel();
-                }
+                    disconnectionResource.Dispose();
                     break;
             }
         }
 
-        return subscription;
+        return Disposable.Create(this, static parent =>
+        {
+            lock (parent.gate)
+            {
+                if (!parent.state.IsConnected(out var subscriptions, out var connection, out var instantDisconnect))
+                {
+                    return;
+                }
+
+                if (subscriptions > 1L)
+                {
+                    parent.state = State.Connected(subscriptions - 1L, connection, instantDisconnect);
+
+                    return;
+                }
+
+                if (instantDisconnect || parent.disconnectDelay <= TimeSpan.Zero)
+                {
+                    connection.Dispose();
+                    parent.subjects.OnNext(parent.CreateNewSubject());
+                    parent.state = State.Initial;
+
+                    return;
+                }
+
+
+                var resource = new DisposableReference();
+
+                resource.Disposable =
+                    parent.disconnectScheduler.Schedule(
+                        (parent, resource),
+                        parent.disconnectDelay,
+                        static (_, tuple) =>
+                        {
+                            var (parent, resource) = tuple;
+
+                            lock (parent.gate)
+                            {
+                                if (
+                                    parent.state.IsDisconnecting(out var connection, out var disconnectionResource) &&
+                                    ReferenceEquals(disconnectionResource, resource.Disposable)
+                                )
+                                {
+                                    connection.Dispose();
+                                    parent.subjects.OnNext(parent.CreateNewSubject());
+                                    parent.state = State.Initial;
+                                }
+                            }
+
+                            return Disposable.Empty;
+                        }
+                    );
+
+                parent.state = State.Disconnecting(connection, resource.Disposable!);
+            }
+        });
     }
-
-
 
 
     private IDisposable Connect()
@@ -118,21 +175,15 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
             switch (state)
             {
                 case var s when s.IsConnected(out var subscriptions, out var connection, out _):
-                {
                     state = State.Connected(subscriptions, connection, true);
-
                     return true;
-                }
 
-                case var s when s.IsDisconnecting(out var connection, out var cancellationTokenSource):
-                {
+                case var s when s.IsDisconnecting(out var connection, out var disconnectionResource):
                     connection.Dispose();
                     subjects.OnNext(CreateNewSubject());
                     state = State.Initial;
-                    cancellationTokenSource.Cancel();
-
+                    disconnectionResource.Dispose();
                     return false;
-                }
 
                 default:
                     return true;
@@ -141,57 +192,12 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
     }
 
 
-    private IDisposable SubscriptionResource()
+
+
+    private sealed class DisposableReference
     {
-        return Disposable.Create(this, static parent =>
-        {
-            lock (parent.gate)
-            {
-                if (parent.state.IsConnected(out var subscriptions, out var connection, out var instantDisconnect))
-                {
-                    if (subscriptions > 1L)
-                    {
-                        parent.state = State.Connected(subscriptions - 1L, connection, instantDisconnect);
-                    }
-                    else
-                    {
-                        if (instantDisconnect || parent.disconnectDelay <= TimeSpan.Zero)
-                        {
-                            connection.Dispose();
-                            parent.subjects.OnNext(parent.CreateNewSubject());
-                            parent.state = State.Initial;
-                        }
-                        else
-                        {
-                            var cancellationTokenSource = new CancellationTokenSource();
-
-                            parent.state = State.Disconnecting(connection, cancellationTokenSource);
-
-                            Task.Run(
-                                async () =>
-                                {
-                                    await Task.Delay(parent.disconnectDelay, cancellationTokenSource.Token);
-
-                                    lock (parent.gate)
-                                    {
-                                        if (parent.state.IsDisconnecting(out var connection, out _))
-                                        {
-                                            connection.Dispose();
-                                            parent.subjects.OnNext(parent.CreateNewSubject());
-                                            parent.state = State.Initial;
-                                        }
-                                    }
-                                },
-                                cancellationTokenSource.Token
-                            );
-                        }
-                    }
-                }
-            }
-        });
+        public IDisposable? Disposable { get; set; }
     }
-
-
 
 
     private readonly struct State
@@ -204,7 +210,7 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
 
         private readonly bool instantDisconnect;
 
-        private readonly CancellationTokenSource? cancellationTokenSource;
+        private readonly IDisposable? disconnectionResource;
 
 
         private State(
@@ -212,14 +218,14 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
             long subscriptions,
             IDisposable? connection,
             bool instantDisconnect,
-            CancellationTokenSource? cancellationTokenSource
+            IDisposable? disconnectionResource
         )
         {
             this.tag = tag;
             this.subscriptions = subscriptions;
             this.connection = connection;
             this.instantDisconnect = instantDisconnect;
-            this.cancellationTokenSource = cancellationTokenSource;
+            this.disconnectionResource = disconnectionResource;
         }
 
 
@@ -243,18 +249,18 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
             return false;
         }
 
-        public bool IsDisconnecting(out IDisposable connection, out CancellationTokenSource cancellationTokenSource)
+        public bool IsDisconnecting(out IDisposable connection, out IDisposable disconnectionResource)
         {
             if (tag == 2)
             {
                 connection = this.connection!;
-                cancellationTokenSource = this.cancellationTokenSource!;
+                disconnectionResource = this.disconnectionResource!;
 
                 return true;
             }
-            
+
             connection = this.connection!;
-            cancellationTokenSource = this.cancellationTokenSource!;
+            disconnectionResource = this.disconnectionResource!;
 
             return false;
         }
@@ -265,7 +271,7 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
         public static State Connected(long subscriptions, IDisposable connection, bool instantDisconnect) =>
             new(1, subscriptions, connection, instantDisconnect, null);
 
-        public static State Disconnecting(IDisposable connection, CancellationTokenSource cancellationTokenSource) =>
-            new(2, 0L, connection, false, cancellationTokenSource);
+        public static State Disconnecting(IDisposable connection, IDisposable disconnectionResource) =>
+            new(2, 0L, connection, false, disconnectionResource);
     }
 }
