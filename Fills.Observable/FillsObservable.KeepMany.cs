@@ -1,4 +1,5 @@
-﻿using System.Reactive.Linq;
+﻿using System.Collections.Immutable;
+using System.Reactive.Linq;
 
 namespace Fills;
 
@@ -8,7 +9,7 @@ public static partial class FillsObservableExtensions
         this IObservable<IEnumerable<IObservable<TElement>>> observable
     )
     {
-        return KeepMany(observable, static element => element, static element => element);
+        return KeepMany(observable, Lambdas<IObservable<TElement>>.Identity, Lambdas<IObservable<TElement>>.Identity);
     }
 
 
@@ -17,7 +18,7 @@ public static partial class FillsObservableExtensions
         Func<TElement, IObservable<TResult>> observableSelector
     )
     {
-        return KeepMany(observable, static element => element, observableSelector);
+        return KeepMany(observable, Lambdas<TElement>.Identity, observableSelector);
     }
 
 
@@ -29,50 +30,33 @@ public static partial class FillsObservableExtensions
     {
         return observable
             .Scan(
-                new
-                {
-                    KeySelector = keySelector,
-                    Set = new HashSet<TKey>(),
-                    ItemsRemoved = new HashSet<TKey>(),
-                    ItemsAdded = new HashSet<TKey>()
-                },
-                static (state, element) => (state.Set, element.Select(state.KeySelector).ToHashSet()) switch
-                {
-                    var (previousSet, currentSet) => new
-                    {
-                        state.KeySelector,
-                        Set = currentSet,
-                        ItemsRemoved = previousSet.Except(currentSet).ToHashSet(),
-                        ItemsAdded = currentSet.Except(previousSet).ToHashSet()
-                    }
-                }
+                new KeepManyState<TElement, TKey>(
+                    keySelector,
+                    ImmutableHashSet<TKey>.Empty,
+                    ImmutableHashSet<TKey>.Empty,
+                    ImmutableHashSet<TKey>.Empty
+                ),
+                Lambdas<TElement, TKey>.KeepManyStateFolder
             )
-            .Where(static state => state.ItemsRemoved.Count + state.ItemsAdded.Count > 0)
-            .Select(static state =>
-                Observable.Concat(
-                    state.ItemsRemoved.Select(static itemRemoved => (itemRemoved, false)).ToObservable(),
-                    state.ItemsAdded.Select(static itemAdded => (itemAdded, true)).ToObservable()
-                )
-            )
+            .Where(Lambdas<TElement, TKey>.KeepManyStatePredicate)
+            .Select(Lambdas<TElement, TKey>.KeepManyStateSelector)
             .Concat()
-            .GroupByUntil(
-                static tuple => tuple.Item1,
-                static group =>
-                    group
-                        .Where(static tuple => !tuple.Item2)
-                        .Take(1)
-            )
+            .GroupByUntil(Lambdas<TKey>.KeepManyKeySelector, Lambdas<TKey>.KeepManyDurationSelector)
             .SelectMany(group =>
                 group
-                    .Where(static tuple => tuple.Item2)
+                    .Where(Lambdas<TKey>.KeepManyGroupPredicate)
                     .Take(1)
                     .Select(tuple => observableSelector(tuple.Item1))
                     .Switch()
-                    .TakeUntil(
-                        group
-                            .Where(static tuple => !tuple.Item2)
-                            .Take(1)
-                    )
+                    .TakeUntil(group.Where(Lambdas<TKey>.KeepManyGroupNegativePredicate).Take(1))
             );
     }
+
+
+    private sealed record KeepManyState<TElement, TKey>(
+        Func<TElement, TKey> KeySelector,
+        ImmutableHashSet<TKey> Set,
+        ImmutableHashSet<TKey> ItemsRemoved,
+        ImmutableHashSet<TKey> ItemsAdded
+    );
 }

@@ -15,7 +15,7 @@ public static partial class FillsObservableExtensions
         _ = Task.Run(
             () => observable
                 .Do(
-                    static next => { },
+                    Lambdas<T>.Ignore,
                     error => channel.Writer.Complete(error),
                     () => channel.Writer.Complete()
                 )

@@ -80,63 +80,10 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
             }
         }
 
-        return Disposable.Create(this, static parent =>
-        {
-            lock (parent.gate)
-            {
-                if (!parent.state.IsConnected(out var subscriptions, out var connection, out var instantDisconnect))
-                {
-                    return;
-                }
-
-                if (subscriptions > 1L)
-                {
-                    parent.state = State.Connected(subscriptions - 1L, connection, instantDisconnect);
-
-                    return;
-                }
-
-                if (instantDisconnect || parent.disconnectDelay <= TimeSpan.Zero)
-                {
-                    connection.Dispose();
-                    parent.subjects.OnNext(parent.CreateNewSubject());
-                    parent.state = State.Initial;
-
-                    return;
-                }
-
-
-                var resource = new DisposableReference();
-
-                resource.Disposable =
-                    parent.disconnectScheduler.Schedule(
-                        (parent, resource),
-                        parent.disconnectDelay,
-                        static (_, tuple) =>
-                        {
-                            var (parent, resource) = tuple;
-
-                            lock (parent.gate)
-                            {
-                                if (
-                                    parent.state.IsDisconnecting(out var connection, out var disconnectionResource) &&
-                                    ReferenceEquals(disconnectionResource, resource.Disposable)
-                                )
-                                {
-                                    connection.Dispose();
-                                    parent.subjects.OnNext(parent.CreateNewSubject());
-                                    parent.state = State.Initial;
-                                }
-                            }
-
-                            return Disposable.Empty;
-                        }
-                    );
-
-                parent.state = State.Disconnecting(connection, resource.Disposable!);
-            }
-        });
+        return Disposable.Create(this, DisconnectActionLambda);
     }
+
+
 
 
     private IDisposable Connect()
@@ -189,6 +136,81 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
                     return true;
             }
         }
+    }
+
+
+
+
+    private static readonly Action<SharedObservable<TSubjectState, TValue>> DisconnectActionLambda;
+
+
+    private static readonly
+        Func<IScheduler, ValueTuple<SharedObservable<TSubjectState, TValue>, DisposableReference>, IDisposable>
+        DisconnectScheduledActionLambda;
+
+
+    static SharedObservable()
+    {
+        DisconnectScheduledActionLambda =
+            static (_, tuple) =>
+            {
+                var (parent, resource) = tuple;
+
+                lock (parent.gate)
+                {
+                    if (
+                        parent.state.IsDisconnecting(out var connection, out var disconnectionResource) &&
+                        ReferenceEquals(disconnectionResource, resource.Disposable)
+                    )
+                    {
+                        connection.Dispose();
+                        parent.subjects.OnNext(parent.CreateNewSubject());
+                        parent.state = State.Initial;
+                    }
+                }
+
+                return Disposable.Empty;
+            };
+
+        DisconnectActionLambda =
+            static parent =>
+            {
+                lock (parent.gate)
+                {
+                    if (!parent.state.IsConnected(out var subscriptions, out var connection, out var instantDisconnect))
+                    {
+                        return;
+                    }
+
+                    if (subscriptions > 1L)
+                    {
+                        parent.state = State.Connected(subscriptions - 1L, connection, instantDisconnect);
+
+                        return;
+                    }
+
+                    if (instantDisconnect || parent.disconnectDelay <= TimeSpan.Zero)
+                    {
+                        connection.Dispose();
+                        parent.subjects.OnNext(parent.CreateNewSubject());
+                        parent.state = State.Initial;
+
+                        return;
+                    }
+
+
+                    var resource = new DisposableReference();
+
+                    resource.Disposable =
+                        parent.disconnectScheduler.Schedule(
+                            (parent, resource),
+                            parent.disconnectDelay,
+                            DisconnectScheduledActionLambda
+                        );
+
+                    parent.state = State.Disconnecting(connection, resource.Disposable!);
+                }
+            };
     }
 
 
