@@ -1,6 +1,4 @@
-﻿using System.Reactive.Linq;
-
-namespace Fills;
+﻿namespace Fills;
 
 public static partial class FillsObservableExtensions
 {
@@ -9,6 +7,6 @@ public static partial class FillsObservableExtensions
         Hint<TResult> resultHint
     )
     {
-        return source.IgnoreElements().Select(Lambdas<TElement, TResult>.Default);
+        return FillsObservable.Create(source, Cache<TElement, TResult>.IgnoreElementsSubscribe, Hint.Of<TResult>());
     }
 }

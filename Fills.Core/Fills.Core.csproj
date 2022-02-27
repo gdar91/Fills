@@ -7,7 +7,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/gdar91/Fills</RepositoryUrl>
-    <Version>0.1.0</Version>
+    <Version>0.1.1-pre4</Version>
     <Description>Type hinting engine and IEnumerable operators, that are missing in the standard library.</Description>
     <Authors>Giorgi Darchiashvili</Authors>
     <Company />

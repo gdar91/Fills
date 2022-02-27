@@ -9,7 +9,7 @@ public static partial class FillsObservableExtensions
         this IObservable<IEnumerable<IObservable<TElement>>> observable
     )
     {
-        return KeepMany(observable, Lambdas<IObservable<TElement>>.Identity, Lambdas<IObservable<TElement>>.Identity);
+        return KeepMany(observable, Cache<IObservable<TElement>>.Identity, Cache<IObservable<TElement>>.Identity);
     }
 
 
@@ -18,7 +18,7 @@ public static partial class FillsObservableExtensions
         Func<TElement, IObservable<TResult>> observableSelector
     )
     {
-        return KeepMany(observable, Lambdas<TElement>.Identity, observableSelector);
+        return KeepMany(observable, Cache<TElement>.Identity, observableSelector);
     }
 
 
@@ -36,24 +36,22 @@ public static partial class FillsObservableExtensions
                     ImmutableHashSet<TKey>.Empty,
                     ImmutableHashSet<TKey>.Empty
                 ),
-                Lambdas<TElement, TKey>.KeepManyStateFolder
+                Cache<TElement, TKey>.KeepManyStateFolder
             )
-            .Where(Lambdas<TElement, TKey>.KeepManyStatePredicate)
-            .Select(Lambdas<TElement, TKey>.KeepManyStateSelector)
+            .TrySelect(Cache<TElement, TKey>.KeepManyStateTrySelector)
             .Concat()
-            .GroupByUntil(Lambdas<TKey>.KeepManyKeySelector, Lambdas<TKey>.KeepManyDurationSelector)
+            .GroupByUntil(Cache<TKey>.KeepManyKeySelector, Cache<TKey>.KeepManyDurationSelector)
             .SelectMany(group =>
                 group
-                    .Where(Lambdas<TKey>.KeepManyGroupPredicate)
+                    .TrySelect(observableSelector, Cache<TKey, TResult>.KeepManyGroupTrySelector)
                     .Take(1)
-                    .Select(tuple => observableSelector(tuple.Item1))
                     .Switch()
-                    .TakeUntil(group.Where(Lambdas<TKey>.KeepManyGroupNegativePredicate).Take(1))
+                    .TakeUntil(group.Where(Cache<TKey>.KeepManyGroupNegativePredicate).Take(1))
             );
     }
 
 
-    private sealed record KeepManyState<TElement, TKey>(
+    internal sealed record KeepManyState<TElement, TKey>(
         Func<TElement, TKey> KeySelector,
         ImmutableHashSet<TKey> Set,
         ImmutableHashSet<TKey> ItemsRemoved,

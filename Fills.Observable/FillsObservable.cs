@@ -1,10 +1,9 @@
 ﻿using System.Reactive.Concurrency;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 
 namespace Fills;
 
-public static class FillsObservable
+public static partial class FillsObservable
 {
     public static IObservable<TElement> Return<TElement>(TElement value) => Observable.Return(value);
 
@@ -37,26 +36,6 @@ public static class FillsObservable
 
     public static IObservable<TElement> Throw<TElement>(Exception error, IScheduler scheduler, Hint<TElement> hint) =>
         Observable.Throw<TElement>(error, scheduler);
-
-
-    public static IObservable<TElement> FromAsyncEnumerable<TElement>(
-        Func<CancellationToken, IAsyncEnumerable<TElement>> asyncEnumerableFunc
-    )
-    {
-        return Observable.Create<TElement>(async (observer, cancellationToken) =>
-        {
-            var asyncEnumerable = asyncEnumerableFunc(cancellationToken);
-
-            await foreach (var item in asyncEnumerable.WithCancellation(cancellationToken))
-            {
-                observer.OnNext(item);
-            }
-
-            observer.OnCompleted();
-
-            return Disposable.Empty;
-        });
-    }
 
 
     public static Hint<IObservable<TElement>> Hint<TElement>(Hint<TElement> hint) => default;

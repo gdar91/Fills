@@ -1,4 +1,5 @@
 ﻿using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 using System.Threading.Channels;
 
 namespace Fills;
@@ -12,25 +13,26 @@ public static partial class FillsObservableExtensions
     {
         var channel = Channel.CreateUnbounded<T>();
 
-        _ = Task.Run(
-            () => observable
-                .Do(
-                    Lambdas<T>.Ignore,
-                    error => channel.Writer.Complete(error),
-                    () => channel.Writer.Complete()
+        _ = observable
+            .Do(
+                FillsObserver.Create(
+                    channel,
+                    Cache<T>.RunAsChannelReaderOnNext,
+                    Cache<T>.RunAsChannelReaderOnError,
+                    Cache<T>.RunAsChannelReaderOnCompleted,
+                    Hint.Of<T>()
                 )
-                .Select(next =>
-                    Observable.FromAsync(cancellationToken =>
-                        channel.Writer
-                            .WriteAsync(next, cancellationToken)
-                            .AsTask()
-                    )
+            )
+            .Select(next =>
+                Observable.FromAsync(cancellationToken =>
+                    channel.Writer
+                        .WriteAsync(next, cancellationToken)
+                        .AsTask()
                 )
-                .Concat()
-                .Finally(() => channel.Writer.Complete())
-                .RunAsync(cancellationToken),
-            cancellationToken
-        );
+            )
+            .Concat()
+            .Finally(() => channel.Writer.TryComplete())
+            .ToTask(cancellationToken);
 
         return channel.Reader;
     }

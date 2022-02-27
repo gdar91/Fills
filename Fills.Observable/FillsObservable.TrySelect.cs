@@ -1,6 +1,4 @@
-﻿using System.Reactive.Linq;
-
-namespace Fills;
+﻿namespace Fills;
 
 public static partial class FillsObservableExtensions
 {
@@ -9,22 +7,26 @@ public static partial class FillsObservableExtensions
         TrySelector<TElement, TResult> trySelector
     )
     {
-        return Observable.Create<TResult>(observer =>
-        {
-            return source.Subscribe(
-                element =>
-                {
-                    if (!trySelector(element, out var result))
-                    {
-                        return;
-                    }
-
-                    observer.OnNext(result);
-                },
-                observer.OnError,
-                observer.OnCompleted
+        return
+            FillsObservable.Create(
+                (source, trySelector),
+                Cache<TElement, TResult>.TrySelectSubscribe,
+                Hint.Of<TResult>()
             );
-        });
+    }
+
+    public static IObservable<TResult> TrySelect<TState, TElement, TResult>(
+        this IObservable<TElement> source,
+        TState state,
+        TrySelector<TState, TElement, TResult> trySelector
+    )
+    {
+        return
+            FillsObservable.Create(
+                (source, state, trySelector),
+                Cache<TState, TElement, TResult>.TrySelectSubscribe,
+                Hint.Of<TResult>()
+            );
     }
 
     public static IObservable<TResult> TrySelect<TElement, TResult>(
@@ -33,21 +35,26 @@ public static partial class FillsObservableExtensions
         Hint<TResult> resultHint
     )
     {
-        return Observable.Create<TResult>(observer =>
-        {
-            return source.Subscribe(
-                element =>
-                {
-                    if (!trySelector(element, out var result))
-                    {
-                        return;
-                    }
-
-                    observer.OnNext(result);
-                },
-                observer.OnError,
-                observer.OnCompleted
+        return
+            FillsObservable.Create(
+                (source, trySelector),
+                Cache<TElement, TResult>.TrySelectSubscribe,
+                Hint.Of<TResult>()
             );
-        });
+    }
+
+    public static IObservable<TResult> TrySelect<TState, TElement, TResult>(
+        this IObservable<TElement> source,
+        TState state,
+        TrySelector<TState, TElement, TResult> trySelector,
+        Hint<TResult> resultHint
+    )
+    {
+        return
+            FillsObservable.Create(
+                (source, state, trySelector),
+                Cache<TState, TElement, TResult>.TrySelectSubscribe,
+                Hint.Of<TResult>()
+            );
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Fills;
 
-public struct Hint<T>
+public readonly struct Hint<T>
 {
 }
 
