@@ -3,14 +3,14 @@ using System.Reactive.Disposables;
 
 namespace Fills;
 
-public sealed class FillsStateTaskObservable<TState, TElement> : ObservableBase<TElement>
+public sealed class StateTaskObservable<TState, TElement> : ObservableBase<TElement>
 {
     private readonly TState state;
 
     private readonly Func<TState, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync;
 
 
-    public FillsStateTaskObservable(
+    public StateTaskObservable(
         TState state,
         Func<TState, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync
     )
@@ -29,12 +29,12 @@ public sealed class FillsStateTaskObservable<TState, TElement> : ObservableBase<
 
         if (task.IsCompleted)
         {
-            FillsStateTaskObservable.EmitTaskResult(task, taskDisposeCompletionObserver);
+            StateTaskObservable.EmitTaskResult(task, taskDisposeCompletionObserver);
         }
         else
         {
             task.ContinueWith(
-                FillsStateTaskObservable.Continuation,
+                StateTaskObservable.Continuation,
                 taskDisposeCompletionObserver,
                 CancellationToken.None,
                 TaskContinuationOptions.ExecuteSynchronously,
@@ -53,14 +53,14 @@ public sealed class FillsStateTaskObservable<TState, TElement> : ObservableBase<
 }
 
 
-internal static class FillsStateTaskObservable
+internal static class StateTaskObservable
 {
     public static readonly BooleanDisposable BooleanDisposableTrue;
 
     public static readonly Action<Task<IDisposable>, object?> Continuation;
 
 
-    static FillsStateTaskObservable()
+    static StateTaskObservable()
     {
         var booleanDisposableTrue = new BooleanDisposable();
         booleanDisposableTrue.Dispose();
@@ -122,7 +122,7 @@ internal sealed class TaskDisposeCompletionObserver<TResult> : IObserver<IDispos
 
         if (oldNullable is { } old)
         {
-            if (ReferenceEquals(old, FillsStateTaskObservable.BooleanDisposableTrue))
+            if (ReferenceEquals(old, StateTaskObservable.BooleanDisposableTrue))
             {
                 value.Dispose();
             }
@@ -145,9 +145,9 @@ internal sealed class TaskDisposeCompletionObserver<TResult> : IObserver<IDispos
 
     public void Dispose()
     {
-        var old = Interlocked.Exchange(ref _disposable, FillsStateTaskObservable.BooleanDisposableTrue);
+        var old = Interlocked.Exchange(ref _disposable, StateTaskObservable.BooleanDisposableTrue);
 
-        if (!ReferenceEquals(old, FillsStateTaskObservable.BooleanDisposableTrue))
+        if (!ReferenceEquals(old, StateTaskObservable.BooleanDisposableTrue))
         {
             old?.Dispose();
         }

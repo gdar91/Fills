@@ -7,12 +7,7 @@ public static partial class FillsObservableExtensions
         TrySelector<TElement, TResult> trySelector
     )
     {
-        return
-            FillsObservable.Create(
-                (source, trySelector),
-                Cache<TElement, TResult>.TrySelectSubscribe,
-                Hint.Of<TResult>()
-            );
+        return new TrySelectObservable<TElement, TResult>(source, trySelector);
     }
 
     public static IObservable<TResult> TrySelect<TState, TElement, TResult>(
@@ -21,12 +16,7 @@ public static partial class FillsObservableExtensions
         TrySelector<TState, TElement, TResult> trySelector
     )
     {
-        return
-            FillsObservable.Create(
-                (source, state, trySelector),
-                Cache<TState, TElement, TResult>.TrySelectSubscribe,
-                Hint.Of<TResult>()
-            );
+        return new TrySelect<TState, TElement, TResult>(source, state, trySelector);
     }
 
     public static IObservable<TResult> TrySelect<TElement, TResult>(
@@ -35,12 +25,7 @@ public static partial class FillsObservableExtensions
         Hint<TResult> resultHint
     )
     {
-        return
-            FillsObservable.Create(
-                (source, trySelector),
-                Cache<TElement, TResult>.TrySelectSubscribe,
-                Hint.Of<TResult>()
-            );
+        return new TrySelectObservable<TElement, TResult>(source, trySelector);
     }
 
     public static IObservable<TResult> TrySelect<TState, TElement, TResult>(
@@ -50,11 +35,6 @@ public static partial class FillsObservableExtensions
         Hint<TResult> resultHint
     )
     {
-        return
-            FillsObservable.Create(
-                (source, state, trySelector),
-                Cache<TState, TElement, TResult>.TrySelectSubscribe,
-                Hint.Of<TResult>()
-            );
+        return new TrySelect<TState, TElement, TResult>(source, state, trySelector);
     }
 }

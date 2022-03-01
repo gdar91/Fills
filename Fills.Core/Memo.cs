@@ -2,13 +2,7 @@
 
 namespace Fills;
 
-public interface IMemo<in TKey, out TValue>
-{
-    TValue this[TKey key] { get; }
-}
-
-
-public sealed class Memo<TKey, TValue> : IMemo<TKey, TValue> where TKey : notnull
+public sealed class Memo<TKey, TValue> : IKeyLookup<TKey, TValue> where TKey : notnull
 {
     private readonly ConcurrentDictionary<TKey, TValue> dictionary = new();
 

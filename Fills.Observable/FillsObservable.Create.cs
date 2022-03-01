@@ -7,7 +7,7 @@ public static partial class FillsObservable
         Func<TState, IObserver<TElement>, IDisposable> subscribe
     )
     {
-        return new FillsStateObservable<TState, TElement>(state, subscribe);
+        return new StateObservable<TState, TElement>(state, subscribe);
     }
 
     public static IObservable<TElement> Create<TState, TElement>(
@@ -16,7 +16,7 @@ public static partial class FillsObservable
         Hint<TElement> hint
     )
     {
-        return new FillsStateObservable<TState, TElement>(state, subscribe);
+        return new StateObservable<TState, TElement>(state, subscribe);
     }
 
 
@@ -25,7 +25,7 @@ public static partial class FillsObservable
         Func<TState, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync
     )
     {
-        return new FillsStateTaskObservable<TState,TElement>(state, subscribeAsync);
+        return new StateTaskObservable<TState,TElement>(state, subscribeAsync);
     }
 
     public static IObservable<TElement> Create<TState, TElement>(
@@ -34,6 +34,6 @@ public static partial class FillsObservable
         Hint<TElement> hint
     )
     {
-        return new FillsStateTaskObservable<TState,TElement>(state, subscribeAsync);
+        return new StateTaskObservable<TState,TElement>(state, subscribeAsync);
     }
 }

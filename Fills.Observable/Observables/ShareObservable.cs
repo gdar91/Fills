@@ -5,7 +5,7 @@ using System.Reactive.Subjects;
 
 namespace Fills;
 
-public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue>
+public sealed class ShareObservable<TSubjectState, TValue> : IObservable<TValue>
 {
     private readonly IObservable<TValue> source;
 
@@ -29,7 +29,7 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
     private State state;
 
 
-    public SharedObservable(
+    public ShareObservable(
         IObservable<TValue> source,
         TSubjectState subjectState,
         Func<TSubjectState, ISubject<TValue>> subjectFactory,
@@ -130,11 +130,11 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
 
 
 
-    private static readonly Action<(SharedObservable<TSubjectState, TValue>, ISubject<TValue> subject), TValue> OnNext =
+    private static readonly Action<(ShareObservable<TSubjectState, TValue>, ISubject<TValue> subject), TValue> OnNext =
         static (tuple, next) => tuple.subject.OnNext(next);
 
     private static readonly
-        Action<(SharedObservable<TSubjectState, TValue>, ISubject<TValue> subject), Exception>
+        Action<(ShareObservable<TSubjectState, TValue>, ISubject<TValue> subject), Exception>
         OnError =
             static (tuple, error) =>
             {
@@ -144,7 +144,7 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
                 }
             };
 
-    private static readonly Action<(SharedObservable<TSubjectState, TValue>, ISubject<TValue> subject)> OnCompleted =
+    private static readonly Action<(ShareObservable<TSubjectState, TValue>, ISubject<TValue> subject)> OnCompleted =
         static tuple =>
         {
             if (tuple.Item1.OnFinal())
@@ -153,7 +153,7 @@ public sealed class SharedObservable<TSubjectState, TValue> : IObservable<TValue
             }
         };
 
-    private static readonly Action<SharedObservable<TSubjectState, TValue>> DisconnectActionLambda =
+    private static readonly Action<ShareObservable<TSubjectState, TValue>> DisconnectActionLambda =
         static parent =>
         {
             lock (parent.gate)

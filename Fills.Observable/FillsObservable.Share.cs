@@ -12,7 +12,7 @@ public static partial class FillsObservableExtensions
     )
     {
         return
-            new SharedObservable<TSubjectState, TValue>(
+            new ShareObservable<TSubjectState, TValue>(
                 observable,
                 subjectState,
                 subjectFactory,
@@ -29,7 +29,7 @@ public static partial class FillsObservableExtensions
     )
     {
         return
-            new SharedObservable<TSubjectState, TValue>(
+            new ShareObservable<TSubjectState, TValue>(
                 observable,
                 subjectState,
                 subjectFactory,
@@ -47,7 +47,7 @@ public static partial class FillsObservableExtensions
     )
     {
         return
-            new SharedObservable<TSubjectState, TValue>(
+            new ShareObservable<TSubjectState, TValue>(
                 observable,
                 subjectState,
                 subjectFactory,
@@ -57,14 +57,48 @@ public static partial class FillsObservableExtensions
     }
 
 
+    private static class ShareModule<T>
+    {
+        public static readonly Func<int, Subject<T>> Subject = static _ => new Subject<T>();
+
+        public static readonly Func<T, BehaviorSubject<T>> BehaviorSubject =
+            static initialValue => new BehaviorSubject<T>(initialValue);
+
+        public static readonly Func<int, ReplaySubject<T>> ReplaySubject0 = static _ => new ReplaySubject<T>();
+
+        public static readonly Func<int, ReplaySubject<T>> ReplaySubjectB =
+            static bufferSize => new ReplaySubject<T>(bufferSize);
+
+        public static readonly Func<TimeSpan, ReplaySubject<T>> ReplaySubjectW =
+            static window => new ReplaySubject<T>(window);
+
+        public static readonly Func<IScheduler, ReplaySubject<T>> ReplaySubjectS =
+            static scheduler => new ReplaySubject<T>(scheduler);
+
+        public static readonly Func<(int bufferSize, TimeSpan window), ReplaySubject<T>> ReplaySubjectBw =
+            static tuple => new ReplaySubject<T>(tuple.bufferSize, tuple.window);
+
+        public static readonly Func<(int bufferSize, IScheduler scheduler), ReplaySubject<T>> ReplaySubjectBs =
+            static tuple => new ReplaySubject<T>(tuple.bufferSize, tuple.scheduler);
+
+        public static readonly Func<(TimeSpan window, IScheduler scheduler), ReplaySubject<T>> ReplaySubjectWs =
+            static tuple => new ReplaySubject<T>(tuple.window, tuple.scheduler);
+
+        public static readonly
+            Func<(int bufferSize, TimeSpan window, IScheduler scheduler), ReplaySubject<T>>
+            ReplaySubject3 =
+                static tuple => new ReplaySubject<T>(tuple.bufferSize, tuple.window, tuple.scheduler);
+    }
+
+
 
 
     public static IObservable<TValue> Share<TValue>(this IObservable<TValue> observable) =>
-        observable.ShareCore(0, Cache<TValue>.Subject);
+        observable.ShareCore(0, ShareModule<TValue>.Subject);
 
     public static IObservable<TValue> ShareKeep<TValue>(this IObservable<TValue> observable, TimeSpan disconnectDelay)
     {
-        return observable.ShareCore(0, Cache<TValue>.Subject, disconnectDelay);
+        return observable.ShareCore(0, ShareModule<TValue>.Subject, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareKeep<TValue>(
@@ -73,12 +107,12 @@ public static partial class FillsObservableExtensions
         IScheduler disconnectScheduler
     )
     {
-        return observable.ShareCore(0, Cache<TValue>.Subject, disconnectDelay, disconnectScheduler);
+        return observable.ShareCore(0, ShareModule<TValue>.Subject, disconnectDelay, disconnectScheduler);
     }
 
 
     public static IObservable<TValue> Share<TValue>(this IObservable<TValue> observable, TValue initialValue) =>
-        observable.ShareCore(initialValue, Cache<TValue>.BehaviorSubject);
+        observable.ShareCore(initialValue, ShareModule<TValue>.BehaviorSubject);
 
     public static IObservable<TValue> ShareKeep<TValue>(
         this IObservable<TValue> observable,
@@ -86,7 +120,7 @@ public static partial class FillsObservableExtensions
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore(initialValue, Cache<TValue>.BehaviorSubject, disconnectDelay);
+        return observable.ShareCore(initialValue, ShareModule<TValue>.BehaviorSubject, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareKeep<TValue>(
@@ -99,7 +133,7 @@ public static partial class FillsObservableExtensions
         return
             observable.ShareCore(
                 initialValue,
-                Cache<TValue>.BehaviorSubject,
+                ShareModule<TValue>.BehaviorSubject,
                 disconnectDelay,
                 disconnectScheduler
             );
@@ -109,14 +143,14 @@ public static partial class FillsObservableExtensions
 
 
     public static IObservable<TValue> ShareReplay<TValue>(this IObservable<TValue> observable) =>
-        observable.ShareCore(0, Cache<TValue>.ReplaySubject0);
+        observable.ShareCore(0, ShareModule<TValue>.ReplaySubject0);
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
         this IObservable<TValue> observable,
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore(0, Cache<TValue>.ReplaySubject0, disconnectDelay);
+        return observable.ShareCore(0, ShareModule<TValue>.ReplaySubject0, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -125,12 +159,12 @@ public static partial class FillsObservableExtensions
         IScheduler disconnectScheduler
     )
     {
-        return observable.ShareCore(0, Cache<TValue>.ReplaySubject0, disconnectDelay, disconnectScheduler);
+        return observable.ShareCore(0, ShareModule<TValue>.ReplaySubject0, disconnectDelay, disconnectScheduler);
     }
 
 
     public static IObservable<TValue> ShareReplay<TValue>(this IObservable<TValue> observable, int bufferSize) =>
-        observable.ShareCore(bufferSize, Cache<TValue>.ReplaySubjectB);
+        observable.ShareCore(bufferSize, ShareModule<TValue>.ReplaySubjectB);
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
         this IObservable<TValue> observable,
@@ -138,7 +172,7 @@ public static partial class FillsObservableExtensions
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore(bufferSize, Cache<TValue>.ReplaySubjectB, disconnectDelay);
+        return observable.ShareCore(bufferSize, ShareModule<TValue>.ReplaySubjectB, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -148,12 +182,12 @@ public static partial class FillsObservableExtensions
         IScheduler disconnectScheduler
     )
     {
-        return observable.ShareCore(bufferSize, Cache<TValue>.ReplaySubjectB, disconnectDelay, disconnectScheduler);
+        return observable.ShareCore(bufferSize, ShareModule<TValue>.ReplaySubjectB, disconnectDelay, disconnectScheduler);
     }
 
 
     public static IObservable<TValue> ShareReplay<TValue>(this IObservable<TValue> observable, TimeSpan window) =>
-        observable.ShareCore(window, Cache<TValue>.ReplaySubjectW);
+        observable.ShareCore(window, ShareModule<TValue>.ReplaySubjectW);
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
         this IObservable<TValue> observable,
@@ -161,7 +195,7 @@ public static partial class FillsObservableExtensions
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore(window, Cache<TValue>.ReplaySubjectW, disconnectDelay);
+        return observable.ShareCore(window, ShareModule<TValue>.ReplaySubjectW, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -171,12 +205,12 @@ public static partial class FillsObservableExtensions
         IScheduler disconnectScheduler
     )
     {
-        return observable.ShareCore(window, Cache<TValue>.ReplaySubjectW, disconnectDelay, disconnectScheduler);
+        return observable.ShareCore(window, ShareModule<TValue>.ReplaySubjectW, disconnectDelay, disconnectScheduler);
     }
 
 
     public static IObservable<TValue> ShareReplay<TValue>(this IObservable<TValue> observable, IScheduler scheduler) =>
-        observable.ShareCore(scheduler, Cache<TValue>.ReplaySubjectS);
+        observable.ShareCore(scheduler, ShareModule<TValue>.ReplaySubjectS);
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
         this IObservable<TValue> observable,
@@ -184,7 +218,7 @@ public static partial class FillsObservableExtensions
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore(scheduler, Cache<TValue>.ReplaySubjectS, disconnectDelay);
+        return observable.ShareCore(scheduler, ShareModule<TValue>.ReplaySubjectS, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -194,7 +228,7 @@ public static partial class FillsObservableExtensions
         IScheduler disconnectScheduler
     )
     {
-        return observable.ShareCore(scheduler, Cache<TValue>.ReplaySubjectS, disconnectDelay, disconnectScheduler);
+        return observable.ShareCore(scheduler, ShareModule<TValue>.ReplaySubjectS, disconnectDelay, disconnectScheduler);
     }
 
 
@@ -204,7 +238,7 @@ public static partial class FillsObservableExtensions
         TimeSpan window
     )
     {
-        return observable.ShareCore((bufferSize, window), Cache<TValue>.ReplaySubjectBw);
+        return observable.ShareCore((bufferSize, window), ShareModule<TValue>.ReplaySubjectBw);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -214,7 +248,7 @@ public static partial class FillsObservableExtensions
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore((bufferSize, window), Cache<TValue>.ReplaySubjectBw, disconnectDelay);
+        return observable.ShareCore((bufferSize, window), ShareModule<TValue>.ReplaySubjectBw, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -227,7 +261,7 @@ public static partial class FillsObservableExtensions
     {
         return
             observable.ShareCore((bufferSize, window),
-                Cache<TValue>.ReplaySubjectBw,
+                ShareModule<TValue>.ReplaySubjectBw,
                 disconnectDelay,
                 disconnectScheduler
             );
@@ -240,7 +274,7 @@ public static partial class FillsObservableExtensions
         IScheduler scheduler
     )
     {
-        return observable.ShareCore((bufferSize, scheduler), Cache<TValue>.ReplaySubjectBs);
+        return observable.ShareCore((bufferSize, scheduler), ShareModule<TValue>.ReplaySubjectBs);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -250,7 +284,7 @@ public static partial class FillsObservableExtensions
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore((bufferSize, scheduler), Cache<TValue>.ReplaySubjectBs, disconnectDelay);
+        return observable.ShareCore((bufferSize, scheduler), ShareModule<TValue>.ReplaySubjectBs, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -264,7 +298,7 @@ public static partial class FillsObservableExtensions
         return
             observable.ShareCore(
                 (bufferSize, scheduler),
-                Cache<TValue>.ReplaySubjectBs,
+                ShareModule<TValue>.ReplaySubjectBs,
                 disconnectDelay,
                 disconnectScheduler
             );
@@ -277,7 +311,7 @@ public static partial class FillsObservableExtensions
         IScheduler scheduler
     )
     {
-        return observable.ShareCore((window, scheduler), Cache<TValue>.ReplaySubjectWs);
+        return observable.ShareCore((window, scheduler), ShareModule<TValue>.ReplaySubjectWs);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -287,7 +321,7 @@ public static partial class FillsObservableExtensions
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore((window, scheduler), Cache<TValue>.ReplaySubjectWs, disconnectDelay);
+        return observable.ShareCore((window, scheduler), ShareModule<TValue>.ReplaySubjectWs, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -301,7 +335,7 @@ public static partial class FillsObservableExtensions
         return
             observable.ShareCore(
                 (window, scheduler),
-                Cache<TValue>.ReplaySubjectWs,
+                ShareModule<TValue>.ReplaySubjectWs,
                 disconnectDelay,
                 disconnectScheduler
             );
@@ -315,7 +349,7 @@ public static partial class FillsObservableExtensions
         IScheduler scheduler
     )
     {
-        return observable.ShareCore((bufferSize, window, scheduler), Cache<TValue>.ReplaySubject3);
+        return observable.ShareCore((bufferSize, window, scheduler), ShareModule<TValue>.ReplaySubject3);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -326,7 +360,7 @@ public static partial class FillsObservableExtensions
         TimeSpan disconnectDelay
     )
     {
-        return observable.ShareCore((bufferSize, window, scheduler), Cache<TValue>.ReplaySubject3, disconnectDelay);
+        return observable.ShareCore((bufferSize, window, scheduler), ShareModule<TValue>.ReplaySubject3, disconnectDelay);
     }
 
     public static IObservable<TValue> ShareReplayKeep<TValue>(
@@ -341,7 +375,7 @@ public static partial class FillsObservableExtensions
         return
             observable.ShareCore(
                 (bufferSize, window, scheduler),
-                Cache<TValue>.ReplaySubject3,
+                ShareModule<TValue>.ReplaySubject3,
                 disconnectDelay,
                 disconnectScheduler
             );

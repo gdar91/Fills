@@ -1,4 +1,5 @@
-﻿using System.Reactive.Linq;
+﻿using System.Reactive;
+using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Threading.Channels;
 
@@ -14,15 +15,7 @@ public static partial class FillsObservableExtensions
         var channel = Channel.CreateUnbounded<T>();
 
         _ = observable
-            .Do(
-                FillsObserver.Create(
-                    channel,
-                    Cache<T>.RunAsChannelReaderOnNext,
-                    Cache<T>.RunAsChannelReaderOnError,
-                    Cache<T>.RunAsChannelReaderOnCompleted,
-                    Hint.Of<T>()
-                )
-            )
+            .Do(new RunAsChannelReaderCompletionObserver<T>(channel))
             .Select(next =>
                 Observable.FromAsync(cancellationToken =>
                     channel.Writer
@@ -35,5 +28,32 @@ public static partial class FillsObservableExtensions
             .ToTask(cancellationToken);
 
         return channel.Reader;
+    }
+
+
+    private sealed class RunAsChannelReaderCompletionObserver<T> : ObserverBase<T>
+    {
+        private readonly Channel<T> channel;
+
+
+        public RunAsChannelReaderCompletionObserver(Channel<T> channel)
+        {
+            this.channel = channel;
+        }
+
+
+        protected override void OnNextCore(T value)
+        {
+        }
+
+        protected override void OnErrorCore(Exception error)
+        {
+            channel.Writer.TryComplete(error);
+        }
+
+        protected override void OnCompletedCore()
+        {
+            channel.Writer.TryComplete();
+        }
     }
 }

@@ -2,7 +2,7 @@ using System.Reactive;
 
 namespace Fills;
 
-public sealed class FillsStateObserver<TState, TElement> : ObserverBase<TElement>
+public sealed class StateObserver<TState, TElement> : ObserverBase<TElement>
 {
     private readonly TState state;
 
@@ -13,7 +13,7 @@ public sealed class FillsStateObserver<TState, TElement> : ObserverBase<TElement
     private readonly Action<TState> onCompleted;
 
 
-    public FillsStateObserver(
+    public StateObserver(
         TState state,
         Action<TState, TElement> onNext,
         Action<TState, Exception> onError,
