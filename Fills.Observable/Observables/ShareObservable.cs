@@ -1,106 +1,99 @@
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 namespace Fills;
 
-public sealed class ShareObservable<TSubjectState, TValue> : IObservable<TValue>
+public sealed class ShareObservable<TSubjectFactoryState, TElement> : IObservable<TElement>
 {
-    private readonly IObservable<TValue> source;
+    private readonly IObservable<TElement> source;
 
-    private readonly TSubjectState subjectState;
+    private readonly TSubjectFactoryState subjectFactoryState;
 
-    private readonly Func<TSubjectState, ISubject<TValue>> subjectFactory;
+    private readonly Func<TSubjectFactoryState, ISubject<TElement>> subjectFactory;
 
     private readonly TimeSpan disconnectDelay;
 
     private readonly IScheduler disconnectScheduler;
 
+
     private readonly object gate;
-
-    private readonly BehaviorSubject<ISubject<TValue>> subjects;
-
-    private readonly IObservable<TValue> results;
-
-    private readonly IObservable<TValue> observable;
-
 
     private State state;
 
 
     public ShareObservable(
-        IObservable<TValue> source,
-        TSubjectState subjectState,
-        Func<TSubjectState, ISubject<TValue>> subjectFactory,
+        IObservable<TElement> source,
+        TSubjectFactoryState subjectFactoryState,
+        Func<TSubjectFactoryState, ISubject<TElement>> subjectFactory,
         TimeSpan disconnectDelay,
         IScheduler disconnectScheduler
     )
     {
         this.source = source;
-        this.subjectState = subjectState;
+        this.subjectFactoryState = subjectFactoryState;
         this.subjectFactory = subjectFactory;
         this.disconnectDelay = disconnectDelay;
         this.disconnectScheduler = disconnectScheduler;
 
         gate = new();
-        subjects = new(CreateNewSubject());
-        results = subjects.Switch();
-        observable = Observable.Using(SubscriptionResource, _ => results);
-
         state = State.Initial;
     }
 
 
-    public IDisposable Subscribe(IObserver<TValue> observer) => observable.SubscribeSafe(observer);
-
-
-    private ISubject<TValue> CreateNewSubject() => subjectFactory(subjectState);
-
-
-    private IDisposable SubscriptionResource()
+    public IDisposable Subscribe(IObserver<TElement> observer)
     {
+        IDisposable subscription;
+
+        ConnectionInfo? nullableConnectionInfo = null;
+
         lock (gate)
         {
             switch (state)
             {
                 case { IsInitial: true }:
-                    state = State.Connected(1L, Connect(), false);
+                {
+                    var subject = subjectFactory(subjectFactoryState);
+                    var connection = new SingleAssignmentDisposable();
+
+                    subscription = subject.Subscribe(observer);
+                    nullableConnectionInfo = new ConnectionInfo(subject, connection);
+
+                    state = State.Connected(1L, subject, connection, false);
+                }
                     break;
 
-                case var s when s.IsConnected(out var subscriptions, out var connection, out var instantDisconnect):
-                    state = State.Connected(subscriptions + 1L, connection, instantDisconnect);
+                case var s when
+                    s.IsConnected(out var subscriptions, out var subject, out var connection, out var disconnected):
+                {
+                    subscription = subject.Subscribe(observer);
+                    state = State.Connected(subscriptions + 1L, subject, connection, disconnected);
+                }
                     break;
 
-                case var s when s.IsDisconnecting(out var connection, out var disconnectionResource):
-                    state = State.Connected(1L, connection, false);
-                    disconnectionResource.Dispose();
+                case var s when s.IsDisconnecting(out var subject, out var connection, out var disposableReference):
+                {
+                    using var disconnectionDisposableResource = disposableReference.Disposable;
+
+                    subscription = subject.Subscribe(observer);
+                    state = State.Connected(1L, subject, connection, false);
+                }
                     break;
+
+                default:
+                    throw new InvalidOperationException();
+            }
+
+            if (nullableConnectionInfo is { } connectionInfo)
+            {
+                connectionInfo.SingleAssignmentDisposable.Disposable =
+                    source.SubscribeSafe(
+                        FillsObserver.Create((this, connectionInfo.Subject), OnNext, OnError, OnCompleted)
+                    );
             }
         }
 
-        return Disposable.Create(this, DisconnectActionLambda);
-    }
-
-
-
-
-    private IDisposable Connect()
-    {
-        var subject = subjects.Value;
-
-        var connection =
-            source.SubscribeSafe(
-                FillsObserver.Create(
-                    (this, subject),
-                    OnNext,
-                    OnError,
-                    OnCompleted,
-                    Hint.Of<TValue>()
-                )
-            );
-
-        return connection;
+        return Disposable.Create((this, subscription), Unsubscribe);
     }
 
 
@@ -110,16 +103,18 @@ public sealed class ShareObservable<TSubjectState, TValue> : IObservable<TValue>
         {
             switch (state)
             {
-                case var s when s.IsConnected(out var subscriptions, out var connection, out _):
-                    state = State.Connected(subscriptions, connection, true);
+                case var s when s.IsConnected(out var subscriptions, out var subject, out var connection, out _):
+                    state = State.Connected(subscriptions, subject, connection, true);
                     return true;
 
-                case var s when s.IsDisconnecting(out var connection, out var disconnectionResource):
-                    connection.Dispose();
-                    subjects.OnNext(CreateNewSubject());
+                case var s when s.IsDisconnecting(out _, out var connection, out var disposableReference):
+                {
+                    using var disconnectionDisposableResource = disposableReference.Disposable;
+                    using var connectionResource = connection;
                     state = State.Initial;
-                    disconnectionResource.Dispose();
+
                     return false;
+                }
 
                 default:
                     return true;
@@ -128,96 +123,133 @@ public sealed class ShareObservable<TSubjectState, TValue> : IObservable<TValue>
     }
 
 
-
-
-    private static readonly Action<(ShareObservable<TSubjectState, TValue>, ISubject<TValue> subject), TValue> OnNext =
-        static (tuple, next) => tuple.subject.OnNext(next);
+    private static readonly
+        Action<(ShareObservable<TSubjectFactoryState, TElement> @this, ISubject<TElement> subject), TElement>
+        OnNext;
 
     private static readonly
-        Action<(ShareObservable<TSubjectState, TValue>, ISubject<TValue> subject), Exception>
+        Action<(ShareObservable<TSubjectFactoryState, TElement> @this, ISubject<TElement> subject), Exception>
+        OnError;
+
+    private static readonly
+        Action<(ShareObservable<TSubjectFactoryState, TElement> @this, ISubject<TElement> subject)>
+        OnCompleted;
+
+    private static readonly
+        Func<
+            IScheduler,
+            (ShareObservable<TSubjectFactoryState, TElement> @this, DisposableReference disposableReference),
+            IDisposable
+        > Disconnect;
+
+    private static readonly
+        Action<(ShareObservable<TSubjectFactoryState, TElement>, IDisposable subscription)>
+        Unsubscribe;
+
+
+    static ShareObservable()
+    {
+        OnNext = static (tuple, next) => tuple.subject.OnNext(next);
+
         OnError =
             static (tuple, error) =>
             {
-                if (tuple.Item1.OnFinal())
+                if (tuple.@this.OnFinal())
                 {
                     tuple.subject.OnError(error);
                 }
             };
 
-    private static readonly Action<(ShareObservable<TSubjectState, TValue>, ISubject<TValue> subject)> OnCompleted =
-        static tuple =>
-        {
-            if (tuple.Item1.OnFinal())
+        OnCompleted =
+            static tuple =>
             {
-                tuple.subject.OnCompleted();
-            }
-        };
+                if (tuple.@this.OnFinal())
+                {
+                    tuple.subject.OnCompleted();
+                }
+            };
 
-    private static readonly Action<ShareObservable<TSubjectState, TValue>> DisconnectActionLambda =
-        static parent =>
-        {
-            lock (parent.gate)
+        Disconnect =
+            static (_, tuple) =>
             {
-                if (!parent.state.IsConnected(out var subscriptions, out var connection, out var instantDisconnect))
+                var (@this, disposableReference) = tuple;
+
+                lock (@this.gate)
                 {
-                    return;
+                    if (
+                        @this.state.IsDisconnecting(out var _, out var connection, out var storedDisposableReference) &&
+                        ReferenceEquals(disposableReference, storedDisposableReference)
+                    )
+                    {
+                        using var connectionResource = connection;
+                        @this.state = State.Initial;
+                    }
                 }
 
-                if (subscriptions > 1L)
+                return Disposable.Empty;
+            };
+
+        Unsubscribe =
+            static tuple =>
+            {
+                var (@this, subscription) = tuple;
+
+                using var subscriptionResource = subscription;
+
+                lock (@this.gate)
                 {
-                    parent.state = State.Connected(subscriptions - 1L, connection, instantDisconnect);
+                    if (
+                        !@this.state.IsConnected(
+                            out var subscriptions,
+                            out var subject,
+                            out var connection,
+                            out var disconnected
+                        )
+                    )
+                    {
+                        return;
+                    }
 
-                    return;
+                    if (subscriptions > 1)
+                    {
+                        @this.state = State.Connected(subscriptions - 1L, subject, connection, disconnected);
+
+                        return;
+                    }
+
+                    if (disconnected || @this.disconnectDelay == TimeSpan.Zero)
+                    {
+                        using var connectionResource = connection;
+                        @this.state = State.Initial;
+
+                        return;
+                    }
+
+                    var disposableReference = new DisposableReference();
+
+                    @this.state = State.Disconnecting(subject, connection, disposableReference);
+
+                    disposableReference.Disposable =
+                        @this.disconnectScheduler.Schedule(
+                            (@this, disposableReference),
+                            @this.disconnectDelay,
+                            Disconnect
+                        );
                 }
-
-                if (instantDisconnect || parent.disconnectDelay <= TimeSpan.Zero)
-                {
-                    connection.Dispose();
-                    parent.subjects.OnNext(parent.CreateNewSubject());
-                    parent.state = State.Initial;
-
-                    return;
-                }
-
-
-                var resource = new DisposableReference();
-
-                resource.Disposable =
-                    parent.disconnectScheduler.Schedule(
-                        (parent, resource),
-                        parent.disconnectDelay,
-                        static (_, tuple) =>
-                        {
-                            var (parent, resource) = tuple;
-
-                            lock (parent.gate)
-                            {
-                                if (
-                                    parent.state.IsDisconnecting(out var connection, out var disconnectionResource) &&
-                                    ReferenceEquals(disconnectionResource, resource.Disposable)
-                                )
-                                {
-                                    connection.Dispose();
-                                    parent.subjects.OnNext(parent.CreateNewSubject());
-                                    parent.state = State.Initial;
-                                }
-                            }
-
-                            return Disposable.Empty;
-                        }
-                    );
-
-                parent.state = State.Disconnecting(connection, resource.Disposable!);
-            }
-        };
-
-
+            };
+    }
 
 
     private sealed class DisposableReference
     {
-        public IDisposable? Disposable { get; set; }
+        public IDisposable Disposable { get; set; } = default!;
     }
+
+
+    private readonly record struct ConnectionInfo(
+        ISubject<TElement> Subject,
+        SingleAssignmentDisposable SingleAssignmentDisposable
+    );
 
 
     private readonly struct State
@@ -226,72 +258,103 @@ public sealed class ShareObservable<TSubjectState, TValue> : IObservable<TValue>
 
         private readonly long subscriptions;
 
+        private readonly ISubject<TElement>? subject;
+
         private readonly IDisposable? connection;
 
-        private readonly bool instantDisconnect;
+        private readonly bool disconnected;
 
-        private readonly IDisposable? disconnectionResource;
+        private readonly DisposableReference? disconnectingDisposableReference;
 
 
         private State(
             int tag,
             long subscriptions,
+            ISubject<TElement>? subject,
             IDisposable? connection,
-            bool instantDisconnect,
-            IDisposable? disconnectionResource
+            bool disconnected,
+            DisposableReference? disconnectingDisposableReference
         )
         {
             this.tag = tag;
             this.subscriptions = subscriptions;
+            this.subject = subject;
             this.connection = connection;
-            this.instantDisconnect = instantDisconnect;
-            this.disconnectionResource = disconnectionResource;
+            this.disconnected = disconnected;
+            this.disconnectingDisposableReference = disconnectingDisposableReference;
         }
 
 
+        public static State Initial { get; } = new(0, default, default, default, default, default);
+
         public bool IsInitial => tag == 0;
 
-        public bool IsConnected(out long subscriptions, out IDisposable connection, out bool instantDisconnect)
+
+        public static State Connected(
+            long subscriptions,
+            ISubject<TElement> subject,
+            IDisposable? connection,
+            bool disconnected
+        )
+        {
+            return new(1, subscriptions, subject, connection, disconnected, default);
+        }
+
+        public bool IsConnected(
+            out long subscriptions,
+            out ISubject<TElement> subject,
+            out IDisposable connection,
+            out bool disconnected
+        )
         {
             if (tag == 1)
             {
                 subscriptions = this.subscriptions;
+                subject = this.subject!;
                 connection = this.connection!;
-                instantDisconnect = this.instantDisconnect;
+                disconnected = this.disconnected;
 
                 return true;
             }
-            
+
             subscriptions = default;
+            subject = default!;
             connection = default!;
-            instantDisconnect = default;
+            disconnected = default;
 
             return false;
         }
 
-        public bool IsDisconnecting(out IDisposable connection, out IDisposable disconnectionResource)
+
+        public static State Disconnecting(
+            ISubject<TElement> subject,
+            IDisposable connection,
+            DisposableReference disposableReference
+        )
+        {
+            return new(2, default, subject, connection, default, disposableReference);
+        }
+
+        public bool IsDisconnecting(
+            out ISubject<TElement> subject,
+            out IDisposable connection,
+            out DisposableReference disposableReference
+        )
         {
             if (tag == 2)
             {
+                subject = this.subject!;
                 connection = this.connection!;
-                disconnectionResource = this.disconnectionResource!;
+                disposableReference = disconnectingDisposableReference!;
 
                 return true;
             }
 
-            connection = this.connection!;
-            disconnectionResource = this.disconnectionResource!;
+            subject = default!;
+            connection = default!;
+            disposableReference = default!;
 
             return false;
         }
-
-
-        public static State Initial { get; } = new(0, 0L, null, false, null);
-
-        public static State Connected(long subscriptions, IDisposable connection, bool instantDisconnect) =>
-            new(1, subscriptions, connection, instantDisconnect, null);
-
-        public static State Disconnecting(IDisposable connection, IDisposable disconnectionResource) =>
-            new(2, 0L, connection, false, disconnectionResource);
     }
 }
