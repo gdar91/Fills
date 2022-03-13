@@ -16,7 +16,7 @@ public static partial class FillsObservableExtensions
         TrySelector<TState, TElement, TResult> trySelector
     )
     {
-        return new TrySelect<TState, TElement, TResult>(source, state, trySelector);
+        return new TrySelectObservable<TState, TElement, TResult>(source, state, trySelector);
     }
 
     public static IObservable<TResult> TrySelect<TElement, TResult>(
@@ -35,6 +35,6 @@ public static partial class FillsObservableExtensions
         Hint<TResult> resultHint
     )
     {
-        return new TrySelect<TState, TElement, TResult>(source, state, trySelector);
+        return new TrySelectObservable<TState, TElement, TResult>(source, state, trySelector);
     }
 }

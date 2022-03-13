@@ -140,7 +140,8 @@ public sealed class ShareObservable<TSubjectFactoryState, TElement> : IObservabl
             IScheduler,
             (ShareObservable<TSubjectFactoryState, TElement> @this, DisposableReference disposableReference),
             IDisposable
-        > Disconnect;
+        >
+        Disconnect;
 
     private static readonly
         Action<(ShareObservable<TSubjectFactoryState, TElement>, IDisposable subscription)>

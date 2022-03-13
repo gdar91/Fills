@@ -41,7 +41,7 @@ public static partial class FillsObservableExtensions
                     ImmutableHashSet<TKey>.Empty,
                     ImmutableHashSet<TKey>.Empty
                 ),
-                KeepManyModule<TElement, TKey>.StateFolder
+                KeepManyModule<TElement, TKey>.StateAccumulator
             )
             .TrySelect(KeepManyModule<TElement, TKey>.StateTrySelector)
             .Concat()
@@ -95,7 +95,7 @@ public static partial class FillsObservableExtensions
     
     private static class KeepManyModule<T1, T2>
     {
-        public static readonly Func<KeepManyState<T1, T2>, IEnumerable<T1>, KeepManyState<T1, T2>> StateFolder =
+        public static readonly Func<KeepManyState<T1, T2>, IEnumerable<T1>, KeepManyState<T1, T2>> StateAccumulator =
             static (state, element) =>
             {
                 var previousSet = state.Set;

@@ -56,7 +56,7 @@ public sealed class TrySelectObservable<TElement, TResult> : ObservableBase<TRes
 }
 
 
-public sealed class TrySelect<TState, TElement, TResult> : ObservableBase<TResult>
+public sealed class TrySelectObservable<TState, TElement, TResult> : ObservableBase<TResult>
 {
     private readonly IObservable<TElement> observable;
     
@@ -65,7 +65,7 @@ public sealed class TrySelect<TState, TElement, TResult> : ObservableBase<TResul
     private readonly TrySelector<TState, TElement, TResult> trySelector;
 
 
-    public TrySelect(IObservable<TElement> observable, TState state, TrySelector<TState, TElement, TResult> trySelector)
+    public TrySelectObservable(IObservable<TElement> observable, TState state, TrySelector<TState, TElement, TResult> trySelector)
     {
         this.observable = observable;
         this.state = state;
@@ -79,12 +79,12 @@ public sealed class TrySelect<TState, TElement, TResult> : ObservableBase<TResul
 
     private sealed class Observer : ObserverBase<TElement>
     {
-        private readonly TrySelect<TState, TElement, TResult> parent;
+        private readonly TrySelectObservable<TState, TElement, TResult> parent;
 
         private readonly IObserver<TResult> observer;
 
 
-        public Observer(TrySelect<TState, TElement, TResult> parent, IObserver<TResult> observer)
+        public Observer(TrySelectObservable<TState, TElement, TResult> parent, IObserver<TResult> observer)
         {
             this.parent = parent;
             this.observer = observer;
