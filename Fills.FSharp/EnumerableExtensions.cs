@@ -23,32 +23,43 @@ public static class EnumerableExtensions
             MapModule.OfSeq(
                 enumerable.TrySelect(
                     (keySelector, valueSelector),
-                    Cache<TElement, TKey, TValue>.ToFSharpMapTrySelector
+                    static (
+                        (Func<TElement, TKey> KeyOf, Func<TElement, TValue> ValueOf) tuple,
+                        TElement element,
+                        out Tuple<TKey, TValue> result
+                    ) =>
+                    {
+                        result = Tuple.Create(tuple.KeyOf(element), tuple.ValueOf(element));
+                        return true;
+                    }
+                )
+            );
+    }
+
+    public static FSharpMap<TKey, TValue> ToFSharpMap<TArg, TElement, TKey, TValue>(
+        this IEnumerable<TElement> enumerable,
+        TArg arg,
+        Func<TArg, TElement, TKey> keySelector,
+        Func<TArg, TElement, TValue> valueSelector
+    )
+    {
+        return
+            MapModule.OfSeq(
+                enumerable.TrySelect(
+                    (arg, keySelector, valueSelector),
+                    static (
+                        (TArg arg, Func<TArg, TElement, TKey> KeyOf, Func<TArg, TElement, TValue> ValueOf) tuple,
+                        TElement element,
+                        out Tuple<TKey, TValue> result
+                    ) =>
+                    {
+                        result = Tuple.Create(tuple.KeyOf(tuple.arg, element), tuple.ValueOf(tuple.arg, element));
+                        return true;
+                    }
                 )
             );
     }
 
     public static FSharpMap<TKey, TValue> ToFSharpMap<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) =>
-        MapModule.OfSeq(dictionary.Select(Cache<TKey, TValue>.ToFSharpMapTupleOfKeyValuePair));
-
-
-
-
-    private static class Cache<T1, T2>
-    {
-        public static readonly Func<KeyValuePair<T1, T2>, Tuple<T1, T2>> ToFSharpMapTupleOfKeyValuePair =
-            static keyValuePair => Tuple.Create(keyValuePair.Key, keyValuePair.Value);
-    }
-
-    private static class Cache<T1, T2, T3>
-    {
-        public static readonly
-            TrySelector<(Func<T1, T2>, Func<T1, T3>), T1, Tuple<T2, T3>>
-            ToFSharpMapTrySelector =
-                static ((Func<T1, T2> KeyOf, Func<T1, T3> ValueOf) state, T1 element, out Tuple<T2, T3> result) =>
-                {
-                    result = Tuple.Create(state.KeyOf(element), state.ValueOf(element));
-                    return true;
-                };
-    }
+        MapModule.OfSeq(dictionary.Select(static keyValuePair => Tuple.Create(keyValuePair.Key, keyValuePair.Value)));
 }

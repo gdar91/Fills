@@ -34,15 +34,15 @@ public static class FillsVOptionExtensions
     {
         return option.IsSome ? whenSome(option.Value) : whenNone();
     }
-    
-    public static TResult Match<TState, T, TResult>(
+
+    public static TResult Match<TArg, T, TResult>(
         this FSharpValueOption<T> option,
-        TState state,
-        Func<TState, T, TResult> whenSome,
-        Func<TState, TResult> whenNone
+        TArg arg,
+        Func<TArg, T, TResult> whenSome,
+        Func<TArg, TResult> whenNone
     )
     {
-        return option.IsSome ? whenSome(state, option.Value) : whenNone(state);
+        return option.IsSome ? whenSome(arg, option.Value) : whenNone(arg);
     }
 
 
@@ -54,15 +54,15 @@ public static class FillsVOptionExtensions
     {
         return option.IsSome ? whenSome(option.Value) : whenNoneValue;
     }
-    
-    public static TResult Match<TState, T, TResult>(
+
+    public static TResult Match<TArg, T, TResult>(
         this FSharpValueOption<T> option,
-        TState state,
-        Func<TState, T, TResult> whenSome,
+        TArg arg,
+        Func<TArg, T, TResult> whenSome,
         TResult whenNoneValue
     )
     {
-        return option.IsSome ? whenSome(state, option.Value) : whenNoneValue;
+        return option.IsSome ? whenSome(arg, option.Value) : whenNoneValue;
     }
 
 
@@ -83,15 +83,15 @@ public static class FillsVOptionExtensions
             ? FSharpValueOption<TResult>.NewValueSome(selector(option.Value))
             : FSharpValueOption<TResult>.ValueNone;
     }
-    
-    public static FSharpValueOption<TResult> Select<TState, T, TResult>(
+
+    public static FSharpValueOption<TResult> Select<TArg, T, TResult>(
         this FSharpValueOption<T> option,
-        TState state,
-        Func<TState, T, TResult> selector
+        TArg arg,
+        Func<TArg, T, TResult> selector
     )
     {
         return option.IsSome
-            ? FSharpValueOption<TResult>.NewValueSome(selector(state, option.Value))
+            ? FSharpValueOption<TResult>.NewValueSome(selector(arg, option.Value))
             : FSharpValueOption<TResult>.ValueNone;
     }
 
@@ -105,15 +105,15 @@ public static class FillsVOptionExtensions
             ? selector(option.Value)
             : FSharpValueOption<TResult>.ValueNone;
     }
-    
-    public static FSharpValueOption<TResult> SelectMany<TState, T, TResult>(
+
+    public static FSharpValueOption<TResult> SelectMany<TArg, T, TResult>(
         this FSharpValueOption<T> option,
-        TState state,
-        Func<TState, T, FSharpValueOption<TResult>> selector
+        TArg arg,
+        Func<TArg, T, FSharpValueOption<TResult>> selector
     )
     {
         return option.IsSome
-            ? selector(state, option.Value)
+            ? selector(arg, option.Value)
             : FSharpValueOption<TResult>.ValueNone;
     }
 

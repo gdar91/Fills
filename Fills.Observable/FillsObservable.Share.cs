@@ -5,55 +5,34 @@ namespace Fills;
 
 public static partial class FillsObservableExtensions
 {
-    private static IObservable<TValue> ShareCore<TSubjectState, TValue>(
+    private static IObservable<TValue> ShareCore<TArg, TValue>(
         this IObservable<TValue> observable,
-        TSubjectState subjectState,
-        Func<TSubjectState, ISubject<TValue>> subjectFactory
+        TArg arg,
+        Func<TArg, ISubject<TValue>> subjectFactory
     )
     {
-        return
-            new ShareObservable<TSubjectState, TValue>(
-                observable,
-                subjectState,
-                subjectFactory,
-                TimeSpan.Zero,
-                Scheduler.Default
-            );
+        return new ShareObservable<TArg, TValue>(observable, arg, subjectFactory, TimeSpan.Zero, Scheduler.Default);
     }
 
-    private static IObservable<TValue> ShareCore<TSubjectState, TValue>(
+    private static IObservable<TValue> ShareCore<TArg, TValue>(
         this IObservable<TValue> observable,
-        TSubjectState subjectState,
-        Func<TSubjectState, ISubject<TValue>> subjectFactory,
+        TArg arg,
+        Func<TArg, ISubject<TValue>> subjectFactory,
         TimeSpan disconnectDelay
     )
     {
-        return
-            new ShareObservable<TSubjectState, TValue>(
-                observable,
-                subjectState,
-                subjectFactory,
-                disconnectDelay,
-                Scheduler.Default
-            );
+        return new ShareObservable<TArg, TValue>(observable, arg, subjectFactory, disconnectDelay, Scheduler.Default);
     }
 
-    private static IObservable<TValue> ShareCore<TSubjectState, TValue>(
+    private static IObservable<TValue> ShareCore<TArg, TValue>(
         this IObservable<TValue> observable,
-        TSubjectState subjectState,
-        Func<TSubjectState, ISubject<TValue>> subjectFactory,
+        TArg arg,
+        Func<TArg, ISubject<TValue>> subjectFactory,
         TimeSpan disconnectDelay,
         IScheduler disconnectScheduler
     )
     {
-        return
-            new ShareObservable<TSubjectState, TValue>(
-                observable,
-                subjectState,
-                subjectFactory,
-                disconnectDelay,
-                disconnectScheduler
-            );
+        return new ShareObservable<TArg, TValue>(observable, arg, subjectFactory, disconnectDelay, disconnectScheduler);
     }
 
 

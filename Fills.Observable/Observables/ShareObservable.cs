@@ -4,13 +4,13 @@ using System.Reactive.Subjects;
 
 namespace Fills;
 
-public sealed class ShareObservable<TSubjectFactoryState, TElement> : IObservable<TElement>
+public sealed class ShareObservable<TArg, TElement> : IObservable<TElement>
 {
     private readonly IObservable<TElement> source;
 
-    private readonly TSubjectFactoryState subjectFactoryState;
+    private readonly TArg arg;
 
-    private readonly Func<TSubjectFactoryState, ISubject<TElement>> subjectFactory;
+    private readonly Func<TArg, ISubject<TElement>> subjectFactory;
 
     private readonly TimeSpan disconnectDelay;
 
@@ -24,14 +24,14 @@ public sealed class ShareObservable<TSubjectFactoryState, TElement> : IObservabl
 
     public ShareObservable(
         IObservable<TElement> source,
-        TSubjectFactoryState subjectFactoryState,
-        Func<TSubjectFactoryState, ISubject<TElement>> subjectFactory,
+        TArg arg,
+        Func<TArg, ISubject<TElement>> subjectFactory,
         TimeSpan disconnectDelay,
         IScheduler disconnectScheduler
     )
     {
         this.source = source;
-        this.subjectFactoryState = subjectFactoryState;
+        this.arg = arg;
         this.subjectFactory = subjectFactory;
         this.disconnectDelay = disconnectDelay;
         this.disconnectScheduler = disconnectScheduler;
@@ -53,7 +53,7 @@ public sealed class ShareObservable<TSubjectFactoryState, TElement> : IObservabl
             {
                 case { IsInitial: true }:
                 {
-                    var subject = subjectFactory(subjectFactoryState);
+                    var subject = subjectFactory(arg);
                     var connection = new SingleAssignmentDisposable();
 
                     subscription = subject.Subscribe(observer);
@@ -124,27 +124,23 @@ public sealed class ShareObservable<TSubjectFactoryState, TElement> : IObservabl
 
 
     private static readonly
-        Action<(ShareObservable<TSubjectFactoryState, TElement> @this, ISubject<TElement> subject), TElement>
+        Action<(ShareObservable<TArg, TElement> @this, ISubject<TElement> subject), TElement>
         OnNext;
 
     private static readonly
-        Action<(ShareObservable<TSubjectFactoryState, TElement> @this, ISubject<TElement> subject), Exception>
+        Action<(ShareObservable<TArg, TElement> @this, ISubject<TElement> subject), Exception>
         OnError;
 
     private static readonly
-        Action<(ShareObservable<TSubjectFactoryState, TElement> @this, ISubject<TElement> subject)>
+        Action<(ShareObservable<TArg, TElement> @this, ISubject<TElement> subject)>
         OnCompleted;
 
     private static readonly
-        Func<
-            IScheduler,
-            (ShareObservable<TSubjectFactoryState, TElement> @this, DisposableReference disposableReference),
-            IDisposable
-        >
+        Func<IScheduler, (ShareObservable<TArg, TElement> @this, DisposableReference disposableReference), IDisposable>
         Disconnect;
 
     private static readonly
-        Action<(ShareObservable<TSubjectFactoryState, TElement>, IDisposable subscription)>
+        Action<(ShareObservable<TArg, TElement>, IDisposable subscription)>
         Unsubscribe;
 
 

@@ -10,13 +10,13 @@ public static partial class FillsObservableExtensions
         return new TrySelectObservable<TElement, TResult>(source, trySelector);
     }
 
-    public static IObservable<TResult> TrySelect<TState, TElement, TResult>(
+    public static IObservable<TResult> TrySelect<TArg, TElement, TResult>(
         this IObservable<TElement> source,
-        TState state,
-        TrySelector<TState, TElement, TResult> trySelector
+        TArg arg,
+        TrySelector<TArg, TElement, TResult> trySelector
     )
     {
-        return new TrySelectObservable<TState, TElement, TResult>(source, state, trySelector);
+        return new TrySelectObservable<TArg, TElement, TResult>(source, arg, trySelector);
     }
 
     public static IObservable<TResult> TrySelect<TElement, TResult>(
@@ -28,13 +28,13 @@ public static partial class FillsObservableExtensions
         return new TrySelectObservable<TElement, TResult>(source, trySelector);
     }
 
-    public static IObservable<TResult> TrySelect<TState, TElement, TResult>(
+    public static IObservable<TResult> TrySelect<TArg, TElement, TResult>(
         this IObservable<TElement> source,
-        TState state,
-        TrySelector<TState, TElement, TResult> trySelector,
+        TArg arg,
+        TrySelector<TArg, TElement, TResult> trySelector,
         Hint<TResult> resultHint
     )
     {
-        return new TrySelectObservable<TState, TElement, TResult>(source, state, trySelector);
+        return new TrySelectObservable<TArg, TElement, TResult>(source, arg, trySelector);
     }
 }

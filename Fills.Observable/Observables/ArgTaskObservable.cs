@@ -3,19 +3,19 @@ using System.Reactive.Disposables;
 
 namespace Fills;
 
-public sealed class StateTaskObservable<TState, TElement> : ObservableBase<TElement>
+public sealed class ArgTaskObservable<TArg, TElement> : ObservableBase<TElement>
 {
-    private readonly TState state;
+    private readonly TArg arg;
 
-    private readonly Func<TState, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync;
+    private readonly Func<TArg, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync;
 
 
-    public StateTaskObservable(
-        TState state,
-        Func<TState, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync
+    public ArgTaskObservable(
+        TArg arg,
+        Func<TArg, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync
     )
     {
-        this.state = state;
+        this.arg = arg;
         this.subscribeAsync = subscribeAsync;
     }
 
@@ -25,16 +25,16 @@ public sealed class StateTaskObservable<TState, TElement> : ObservableBase<TElem
         var taskDisposeCompletionObserver = new TaskDisposeCompletionObserver<TElement>(observer);
         var cancellationTokenSource = new CancellationTokenSource();
 
-        var task = subscribeAsync(state, observer, cancellationTokenSource.Token);
+        var task = subscribeAsync(arg, observer, cancellationTokenSource.Token);
 
         if (task.IsCompleted)
         {
-            StateTaskObservable.EmitTaskResult(task, taskDisposeCompletionObserver);
+            ArgTaskObservable.EmitTaskResult(task, taskDisposeCompletionObserver);
         }
         else
         {
             task.ContinueWith(
-                StateTaskObservable.Continuation,
+                ArgTaskObservable.Continuation,
                 taskDisposeCompletionObserver,
                 CancellationToken.None,
                 TaskContinuationOptions.ExecuteSynchronously,
@@ -53,14 +53,14 @@ public sealed class StateTaskObservable<TState, TElement> : ObservableBase<TElem
 }
 
 
-internal static class StateTaskObservable
+internal static class ArgTaskObservable
 {
     public static readonly BooleanDisposable BooleanDisposableTrue;
 
     public static readonly Action<Task<IDisposable>, object?> Continuation;
 
 
-    static StateTaskObservable()
+    static ArgTaskObservable()
     {
         var booleanDisposableTrue = new BooleanDisposable();
         booleanDisposableTrue.Dispose();
@@ -122,7 +122,7 @@ internal sealed class TaskDisposeCompletionObserver<TResult> : IObserver<IDispos
 
         if (oldNullable is { } old)
         {
-            if (ReferenceEquals(old, StateTaskObservable.BooleanDisposableTrue))
+            if (ReferenceEquals(old, ArgTaskObservable.BooleanDisposableTrue))
             {
                 value.Dispose();
             }
@@ -145,9 +145,9 @@ internal sealed class TaskDisposeCompletionObserver<TResult> : IObserver<IDispos
 
     public void Dispose()
     {
-        var old = Interlocked.Exchange(ref _disposable, StateTaskObservable.BooleanDisposableTrue);
+        var old = Interlocked.Exchange(ref _disposable, ArgTaskObservable.BooleanDisposableTrue);
 
-        if (!ReferenceEquals(old, StateTaskObservable.BooleanDisposableTrue))
+        if (!ReferenceEquals(old, ArgTaskObservable.BooleanDisposableTrue))
         {
             old?.Dispose();
         }

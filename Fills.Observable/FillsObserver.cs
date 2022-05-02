@@ -2,81 +2,76 @@ namespace Fills;
 
 public static class FillsObserver
 {
-    public static StateObserver<TState, TElement> Create<TState, TElement>(
-        TState state,
-        Action<TState, TElement> onNext
+    public static ArgObserver<TArg, TElement> Create<TArg, TElement>(TArg arg, Action<TArg, TElement> onNext) =>
+        new(arg, onNext, CreateModule<TArg>.EmptyOnError, CreateModule<TArg>.EmptyOnCompleted);
+
+    public static ArgObserver<TArg, TElement> Create<TArg, TElement>(
+        TArg arg,
+        Action<TArg, TElement> onNext,
+        Action<TArg, Exception> onError
     )
     {
-        return new(state, onNext, CreateModule<TState>.EmptyOnError, CreateModule<TState>.EmptyOnCompleted);
+        return new(arg, onNext, onError, CreateModule<TArg>.EmptyOnCompleted);
     }
 
-    public static StateObserver<TState, TElement> Create<TState, TElement>(
-        TState state,
-        Action<TState, TElement> onNext,
-        Action<TState, Exception> onError
+    public static ArgObserver<TArg, TElement> Create<TArg, TElement>(
+        TArg arg,
+        Action<TArg, TElement> onNext,
+        Action<TArg> onCompleted
     )
     {
-        return new(state, onNext, onError, CreateModule<TState>.EmptyOnCompleted);
+        return new(arg, onNext, CreateModule<TArg>.EmptyOnError, onCompleted);
     }
 
-    public static StateObserver<TState, TElement> Create<TState, TElement>(
-        TState state,
-        Action<TState, TElement> onNext,
-        Action<TState> onCompleted
+    public static ArgObserver<TArg, TElement> Create<TArg, TElement>(
+        TArg arg,
+        Action<TArg, TElement> onNext,
+        Action<TArg, Exception> onError,
+        Action<TArg> onCompleted
     )
     {
-        return new(state, onNext, CreateModule<TState>.EmptyOnError, onCompleted);
-    }
-
-    public static StateObserver<TState, TElement> Create<TState, TElement>(
-        TState state,
-        Action<TState, TElement> onNext,
-        Action<TState, Exception> onError,
-        Action<TState> onCompleted
-    )
-    {
-        return new(state, onNext, onError, onCompleted);
+        return new(arg, onNext, onError, onCompleted);
     }
 
 
-    public static StateObserver<TState, TElement> Create<TState, TElement>(
-        TState state,
-        Action<TState, TElement> onNext,
+    public static ArgObserver<TArg, TElement> Create<TArg, TElement>(
+        TArg arg,
+        Action<TArg, TElement> onNext,
         Hint<TElement> hint
     )
     {
-        return new(state, onNext, CreateModule<TState>.EmptyOnError, CreateModule<TState>.EmptyOnCompleted);
+        return new(arg, onNext, CreateModule<TArg>.EmptyOnError, CreateModule<TArg>.EmptyOnCompleted);
     }
 
-    public static StateObserver<TState, TElement> Create<TState, TElement>(
-        TState state,
-        Action<TState, TElement> onNext,
-        Action<TState, Exception> onError,
+    public static ArgObserver<TArg, TElement> Create<TArg, TElement>(
+        TArg arg,
+        Action<TArg, TElement> onNext,
+        Action<TArg, Exception> onError,
         Hint<TElement> hint
     )
     {
-        return new(state, onNext, onError, CreateModule<TState>.EmptyOnCompleted);
+        return new(arg, onNext, onError, CreateModule<TArg>.EmptyOnCompleted);
     }
 
-    public static StateObserver<TState, TElement> Create<TState, TElement>(
-        TState state,
-        Action<TState, TElement> onNext,
-        Action<TState> onCompleted,
+    public static ArgObserver<TArg, TElement> Create<TArg, TElement>(
+        TArg arg,
+        Action<TArg, TElement> onNext,
+        Action<TArg> onCompleted,
         Hint<TElement> hint
     )
     {
-        return new(state, onNext, CreateModule<TState>.EmptyOnError, onCompleted);
+        return new(arg, onNext, CreateModule<TArg>.EmptyOnError, onCompleted);
     }
 
-    public static StateObserver<TState, TElement> Create<TState, TElement>(
-        TState state,
-        Action<TState, TElement> onNext,
-        Action<TState, Exception> onError,
-        Action<TState> onCompleted,
+    public static ArgObserver<TArg, TElement> Create<TArg, TElement>(
+        TArg arg,
+        Action<TArg, TElement> onNext,
+        Action<TArg, Exception> onError,
+        Action<TArg> onCompleted,
         Hint<TElement> hint
     )
     {
-        return new(state, onNext, onError, onCompleted);
+        return new(arg, onNext, onError, onCompleted);
     }
 
 

@@ -40,14 +40,14 @@ public static class FillsResultExtensions
         return result.IsOk ? whenOk(result.ResultValue) : whenError(result.ErrorValue);
     }
     
-    public static TResult Match<TState, T, TError, TResult>(
+    public static TResult Match<TArg, T, TError, TResult>(
         this FSharpResult<T, TError> result,
-        TState state,
-        Func<TState, T, TResult> whenOk,
-        Func<TState, TError, TResult> whenError
+        TArg arg,
+        Func<TArg, T, TResult> whenOk,
+        Func<TArg, TError, TResult> whenError
     )
     {
-        return result.IsOk ? whenOk(state, result.ResultValue) : whenError(state, result.ErrorValue);
+        return result.IsOk ? whenOk(arg, result.ResultValue) : whenError(arg, result.ErrorValue);
     }
 
 
@@ -61,14 +61,14 @@ public static class FillsResultExtensions
             : FSharpResult<TResult, TError>.NewError(result.ErrorValue);
     }
     
-    public static FSharpResult<TResult, TError> Select<TState, T, TError, TResult>(
+    public static FSharpResult<TResult, TError> Select<TArg, T, TError, TResult>(
         this FSharpResult<T, TError> result,
-        TState state,
-        Func<TState, T, TResult> selector
+        TArg arg,
+        Func<TArg, T, TResult> selector
     )
     {
         return result.IsOk
-            ? FSharpResult<TResult, TError>.NewOk(selector(state, result.ResultValue))
+            ? FSharpResult<TResult, TError>.NewOk(selector(arg, result.ResultValue))
             : FSharpResult<TResult, TError>.NewError(result.ErrorValue);
     }
 
@@ -83,14 +83,14 @@ public static class FillsResultExtensions
             : FSharpResult<TResult, TError>.NewError(result.ErrorValue);
     }
     
-    public static FSharpResult<TResult, TError> SelectMany<TState, T, TError, TResult>(
+    public static FSharpResult<TResult, TError> SelectMany<TArg, T, TError, TResult>(
         this FSharpResult<T, TError> result,
-        TState state,
-        Func<TState, T, FSharpResult<TResult, TError>> selector
+        TArg arg,
+        Func<TArg, T, FSharpResult<TResult, TError>> selector
     )
     {
         return result.IsOk
-            ? selector(state, result.ResultValue)
+            ? selector(arg, result.ResultValue)
             : FSharpResult<TResult, TError>.NewError(result.ErrorValue);
     }
 

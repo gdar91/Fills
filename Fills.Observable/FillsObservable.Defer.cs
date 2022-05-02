@@ -4,43 +4,19 @@ namespace Fills;
 
 public static partial class FillsObservable
 {
-    public static IObservable<TElement> Defer<TState, TElement>(
-        TState state,
-        Func<TState, IObservable<TElement>> observableFactory
-    )
-    {
-        return Create((state, observableFactory), DeferModule<TState, TElement>.Subscribe, Fills.Hint.Of<TElement>());
-    }
-
-
-    public static IObservable<TElement> Defer<TState, TElement>(
-        TState state,
-        Func<TState, CancellationToken, Task<IObservable<TElement>>> observableFactoryAsync
+    public static IObservable<TElement> Defer<TArg, TElement>(
+        TArg arg,
+        Func<TArg, IObservable<TElement>> observableFactory
     )
     {
         return
             Create(
-                (state, observableFactoryAsync),
-                DeferModule<TState, TElement>.SubscribeAsync,
-                Fills.Hint.Of<TElement>()
-            );
-    }
-
-
-    private static class DeferModule<TState, TElement>
-    {
-        public static readonly
-            Func<
-                (TState state, Func<TState, IObservable<TElement>> observableFactory),
-                IObserver<TElement>,
-                IDisposable
-            >
-            Subscribe =
+                (arg, observableFactory),
                 static (tuple, observer) =>
                 {
                     try
                     {
-                        return tuple.observableFactory(tuple.state).Subscribe(observer);
+                        return tuple.observableFactory(tuple.arg).Subscribe(observer);
                     }
                     catch (Exception exception)
                     {
@@ -48,23 +24,27 @@ public static partial class FillsObservable
 
                         return Disposable.Empty;
                     }
-                };
+                },
+                Fills.Hint.Of<TElement>()
+            );
+    }
 
-        public static readonly
-            Func<
-                (TState state, Func<TState, CancellationToken, Task<IObservable<TElement>>> observableFactoryAsync),
-                IObserver<TElement>,
-                CancellationToken,
-                Task<IDisposable>
-            >
-            SubscribeAsync =
+
+    public static IObservable<TElement> Defer<TArg, TElement>(
+        TArg arg,
+        Func<TArg, CancellationToken, Task<IObservable<TElement>>> observableFactoryAsync
+    )
+    {
+        return
+            Create(
+                (arg, observableFactoryAsync),
                 static async (tuple, observer, cancellationToken) =>
                 {
                     try
                     {
                         var observable =
                             await tuple
-                                .observableFactoryAsync(tuple.state, cancellationToken)
+                                .observableFactoryAsync(tuple.arg, cancellationToken)
                                 .ConfigureAwait(false);
 
                         return observable.Subscribe(observer);
@@ -75,6 +55,8 @@ public static partial class FillsObservable
 
                         return Disposable.Empty;
                     }
-                };
+                },
+                Fills.Hint.Of<TElement>()
+            );
     }
 }

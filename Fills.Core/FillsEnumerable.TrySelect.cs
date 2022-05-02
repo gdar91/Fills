@@ -15,16 +15,16 @@ public static partial class FillsEnumerableExtensions
             }
         }
     }
-    
-    public static IEnumerable<TResult> TrySelect<TState, TElement, TResult>(
+
+    public static IEnumerable<TResult> TrySelect<TArg, TElement, TResult>(
         this IEnumerable<TElement> source,
-        TState state,
-        TrySelector<TState, TElement, TResult> trySelector
+        TArg arg,
+        TrySelector<TArg, TElement, TResult> trySelector
     )
     {
         foreach (var item in source)
         {
-            if (trySelector(state, item, out var result))
+            if (trySelector(arg, item, out var result))
             {
                 yield return result;
             }
@@ -45,17 +45,17 @@ public static partial class FillsEnumerableExtensions
             }
         }
     }
-    
-    public static IEnumerable<TResult> TrySelect<TState, TElement, TResult>(
+
+    public static IEnumerable<TResult> TrySelect<TArg, TElement, TResult>(
         this IEnumerable<TElement> source,
-        TState state,
-        TrySelector<TState, TElement, TResult> trySelector,
+        TArg arg,
+        TrySelector<TArg, TElement, TResult> trySelector,
         Hint<TResult> resultHint
     )
     {
         foreach (var item in source)
         {
-            if (trySelector(state, item, out var result))
+            if (trySelector(arg, item, out var result))
             {
                 yield return result;
             }

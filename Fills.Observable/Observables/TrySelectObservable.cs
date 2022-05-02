@@ -56,19 +56,23 @@ public sealed class TrySelectObservable<TElement, TResult> : ObservableBase<TRes
 }
 
 
-public sealed class TrySelectObservable<TState, TElement, TResult> : ObservableBase<TResult>
+public sealed class TrySelectObservable<TArg, TElement, TResult> : ObservableBase<TResult>
 {
     private readonly IObservable<TElement> observable;
     
-    private readonly TState state;
+    private readonly TArg arg;
     
-    private readonly TrySelector<TState, TElement, TResult> trySelector;
+    private readonly TrySelector<TArg, TElement, TResult> trySelector;
 
 
-    public TrySelectObservable(IObservable<TElement> observable, TState state, TrySelector<TState, TElement, TResult> trySelector)
+    public TrySelectObservable(
+        IObservable<TElement> observable,
+        TArg arg,
+        TrySelector<TArg, TElement, TResult> trySelector
+    )
     {
         this.observable = observable;
-        this.state = state;
+        this.arg = arg;
         this.trySelector = trySelector;
     }
 
@@ -79,12 +83,12 @@ public sealed class TrySelectObservable<TState, TElement, TResult> : ObservableB
 
     private sealed class Observer : ObserverBase<TElement>
     {
-        private readonly TrySelectObservable<TState, TElement, TResult> parent;
+        private readonly TrySelectObservable<TArg, TElement, TResult> parent;
 
         private readonly IObserver<TResult> observer;
 
 
-        public Observer(TrySelectObservable<TState, TElement, TResult> parent, IObserver<TResult> observer)
+        public Observer(TrySelectObservable<TArg, TElement, TResult> parent, IObserver<TResult> observer)
         {
             this.parent = parent;
             this.observer = observer;
@@ -95,7 +99,7 @@ public sealed class TrySelectObservable<TState, TElement, TResult> : ObservableB
         {
             try
             {
-                if (parent.trySelector(parent.state, value, out var result))
+                if (parent.trySelector(parent.arg, value, out var result))
                 {
                     observer.OnNext(result);
                 }
