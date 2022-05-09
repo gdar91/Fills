@@ -1,4 +1,4 @@
-﻿using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Collections;
 
 namespace Fills;
 

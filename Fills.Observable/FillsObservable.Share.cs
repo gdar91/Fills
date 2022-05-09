@@ -1,4 +1,4 @@
-﻿using System.Reactive.Concurrency;
+using System.Reactive.Concurrency;
 using System.Reactive.Subjects;
 
 namespace Fills;

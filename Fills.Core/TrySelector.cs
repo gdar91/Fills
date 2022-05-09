@@ -1,4 +1,4 @@
-﻿namespace Fills;
+namespace Fills;
 
 public delegate bool TrySelector<in TElement, TResult>(TElement element, out TResult result);
 

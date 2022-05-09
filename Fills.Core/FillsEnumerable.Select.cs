@@ -2,15 +2,15 @@ namespace Fills;
 
 public static partial class FillsEnumerableExtensions
 {
-    public static IEnumerable<TResult> Cast<TElement, TResult>(
+    public static IEnumerable<TResult> Select<TArg, TElement, TResult>(
         this IEnumerable<TElement> source,
-        Hint<TResult> resultHint
+        TArg arg,
+        Func<TArg, TElement, TResult> selector
     )
-        where TResult : TElement
     {
         foreach (var item in source)
         {
-            yield return (TResult) item!;
+            yield return selector(arg, item);
         }
     }
 }

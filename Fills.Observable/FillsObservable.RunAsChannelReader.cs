@@ -1,4 +1,4 @@
-﻿using System.Reactive;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Threading.Channels;
@@ -16,12 +16,14 @@ public static partial class FillsObservableExtensions
 
         _ = observable
             .Do(new RunAsChannelReaderCompletionObserver<T>(channel))
-            .Select(next =>
-                Observable.FromAsync(cancellationToken =>
-                    channel.Writer
-                        .WriteAsync(next, cancellationToken)
-                        .AsTask()
-                )
+            .Select(
+                channel,
+                static (channel, next) =>
+                    Observable.FromAsync(cancellationToken =>
+                        channel.Writer
+                            .WriteAsync(next, cancellationToken)
+                            .AsTask()
+                    )
             )
             .Concat()
             .Finally(() => channel.Writer.TryComplete())

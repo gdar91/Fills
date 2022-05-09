@@ -1,4 +1,4 @@
-﻿namespace Fills;
+namespace Fills;
 
 public static partial class FillsFunc
 {

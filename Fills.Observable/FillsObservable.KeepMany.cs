@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Reactive.Linq;
 
 namespace Fills;
@@ -12,20 +12,18 @@ public static partial class FillsObservableExtensions
         return
             KeepMany(
                 observable,
-                KeepManyModule<IObservable<TElement>>.Identity,
-                KeepManyModule<IObservable<TElement>>.Identity
+                KeepManyHelpers<IObservable<TElement>>.Identity,
+                KeepManyHelpers<IObservable<TElement>>.Identity
             );
     }
-
 
     public static IObservable<TResult> KeepMany<TElement, TResult>(
         this IObservable<IEnumerable<TElement>> observable,
         Func<TElement, IObservable<TResult>> observableSelector
     )
     {
-        return KeepMany(observable, KeepManyModule<TElement>.Identity, observableSelector);
+        return KeepMany(observable, KeepManyHelpers<TElement>.Identity, observableSelector);
     }
-
 
     public static IObservable<TResult> KeepMany<TElement, TKey, TResult>(
         this IObservable<IEnumerable<TElement>> observable,
@@ -35,114 +33,113 @@ public static partial class FillsObservableExtensions
     {
         return observable
             .Scan(
-                new KeepManyState<TElement, TKey>(
-                    keySelector,
-                    ImmutableHashSet<TKey>.Empty,
-                    ImmutableHashSet<TKey>.Empty,
-                    ImmutableHashSet<TKey>.Empty
-                ),
-                KeepManyModule<TElement, TKey>.StateAccumulator
+                KeepManyAccumulate<TElement, TKey, TResult>.Initial(keySelector, observableSelector),
+                KeepManyAccumulate<TElement, TKey, TResult>.Accumulator
             )
-            .TrySelect(KeepManyModule<TElement, TKey>.StateTrySelector)
+            .Select(KeepManyAccumulate<TElement, TKey, TResult>.SignalsOf)
             .Concat()
-            .GroupByUntil(KeepManyModule<TKey>.KeySelector, KeepManyModule<TKey>.DurationSelector)
-            .SelectMany(group =>
-                group
-                    .TrySelect(observableSelector, KeepManyModule<TKey, TResult>.GroupTrySelector)
-                    .Take(1)
-                    .Switch()
-                    .TakeUntil(group.Where(KeepManyModule<TKey>.GroupNegativePredicate).Take(1))
-            );
+            .GroupByUntil(KeepManySignal<TKey, TResult>.KeyOf, KeepManySignal<TKey, TResult>.GroupDurationSelector)
+            .SelectMany(KeepManySignal<TKey, TResult>.GroupSelector);
     }
 
 
-    private sealed record KeepManyState<TElement, TKey>(
+    private readonly record struct KeepManyAccumulate<TElement, TKey, TResult>(
         Func<TElement, TKey> KeySelector,
+        Func<TKey, IObservable<TResult>> ObservableSelector,
         ImmutableHashSet<TKey> Set,
-        ImmutableHashSet<TKey> ItemsRemoved,
-        ImmutableHashSet<TKey> ItemsAdded
-    );
-
-
-    private static class KeepManyModule<T>
+        IObservable<KeepManySignal<TKey, TResult>> Signals
+    )
     {
-        public static readonly Func<T, T> Identity;
+        public static readonly
+            Func<
+                KeepManyAccumulate<TElement, TKey, TResult>,
+                IEnumerable<TElement>,
+                KeepManyAccumulate<TElement, TKey, TResult>
+            >
+            Accumulator =
+                static (accumulate, element) =>
+                {
+                    var previousSet = accumulate.Set;
+                    var set = element.Select(accumulate.KeySelector).ToImmutableHashSet();
+                    var itemsRemoved = previousSet.Except(set);
+                    var itemsAdded = set.Except(previousSet);
 
-        public static readonly Func<ValueTuple<T, bool>, T> KeySelector;
+                    var signals =
+                        Observable.Concat(
+                            itemsRemoved
+                                .ToObservable()
+                                .Select(static item =>
+                                    new KeepManySignal<TKey, TResult>(item, Observable.Empty<TResult>(), true)
+                                ),
+                            itemsAdded
+                                .ToObservable()
+                                .Select(
+                                    accumulate.ObservableSelector,
+                                    static (observableSelector, item) =>
+                                        new KeepManySignal<TKey, TResult>(item, observableSelector(item), false)
+                                )
+                        );
+
+                    return accumulate with { Set = set, Signals = signals };
+                };
+
 
         public static readonly
-            Func<IGroupedObservable<T, ValueTuple<T, bool>>, IObservable<ValueTuple<T, bool>>>
-            DurationSelector;
-
-        public static readonly Func<ValueTuple<T, bool>, bool> GroupNegativePredicate;
-
-        public static readonly Func<T, ValueTuple<T, bool>> TupleWithFalse;
-
-        public static readonly Func<T, ValueTuple<T, bool>> TupleWithTrue;
+            Func<KeepManyAccumulate<TElement, TKey, TResult>, IObservable<KeepManySignal<TKey, TResult>>>
+            SignalsOf =
+                static accumulate => accumulate.Signals;
 
 
-        static KeepManyModule()
+        public static KeepManyAccumulate<TElement, TKey, TResult> Initial(
+            Func<TElement, TKey> keySelector,
+            Func<TKey, IObservable<TResult>> observableSelector
+        )
         {
-            Identity = static value => value;
-            GroupNegativePredicate = static valueTuple => !valueTuple.Item2;
-            KeySelector = static valueTuple => valueTuple.Item1;
-            DurationSelector = static group => group.Where(GroupNegativePredicate).Take(1);
-            TupleWithFalse = static value => (value, false);
-            TupleWithTrue = static value => (value, true);
+            return
+                new(
+                    keySelector,
+                    observableSelector,
+                    ImmutableHashSet<TKey>.Empty,
+                    Observable.Empty<KeepManySignal<TKey, TResult>>()
+                );
         }
     }
 
-    
-    private static class KeepManyModule<T1, T2>
+
+    private readonly record struct KeepManySignal<TKey, TResult>(
+        TKey Key,
+        IObservable<TResult> Observable,
+        bool IsFinal
+    )
     {
-        public static readonly Func<KeepManyState<T1, T2>, IEnumerable<T1>, KeepManyState<T1, T2>> StateAccumulator =
-            static (state, element) =>
-            {
-                var previousSet = state.Set;
-                var currentSet = element.Select(state.KeySelector).ToImmutableHashSet();
-                return
-                    new(
-                        state.KeySelector,
-                        currentSet,
-                        previousSet.Except(currentSet),
-                        currentSet.Except(previousSet)
-                    );
-            };
+        public static readonly Func<KeepManySignal<TKey, TResult>, TKey> KeyOf;
 
-        public static readonly TrySelector<KeepManyState<T1, T2>, IObservable<ValueTuple<T2, bool>>> StateTrySelector =
-            static (KeepManyState<T1, T2> state, out IObservable<(T2, bool)> result) =>
-            {
-                if (state.ItemsRemoved.Count + state.ItemsAdded.Count > 0)
-                {
-                    result =
-                        Observable.Concat(
-                            state.ItemsRemoved.Select(KeepManyModule<T2>.TupleWithFalse).ToObservable(),
-                            state.ItemsAdded.Select(KeepManyModule<T2>.TupleWithTrue).ToObservable()
-                        );
+        public static readonly Func<KeepManySignal<TKey, TResult>, IObservable<TResult>> ObservableOf;
 
-                    return true;
-                }
-
-                result = default!;
-
-                return false;
-            };
+        public static readonly Func<KeepManySignal<TKey, TResult>, bool> IsFinalOf;
 
         public static readonly
-            TrySelector<Func<T1, IObservable<T2>>, ValueTuple<T1, bool>, IObservable<T2>>
-            GroupTrySelector =
-                static (Func<T1, IObservable<T2>> observableSelector, (T1, bool) tuple, out IObservable<T2> result) =>
-                {
-                    if (tuple.Item2)
-                    {
-                        result = observableSelector(tuple.Item1);
+            Func<IGroupedObservable<TKey, KeepManySignal<TKey, TResult>>, IObservable<KeepManySignal<TKey, TResult>>>
+            GroupDurationSelector;
 
-                        return true;
-                    }
+        public static readonly
+            Func<IGroupedObservable<TKey, KeepManySignal<TKey, TResult>>, IObservable<TResult>>
+            GroupSelector;
 
-                    result = default!;
 
-                    return false;
-                };
+        static KeepManySignal()
+        {
+            KeyOf = static signal => signal.Key; 
+            ObservableOf = static signal => signal.Observable;
+            IsFinalOf = static signal => signal.IsFinal; 
+            GroupDurationSelector = static group => group.Where(IsFinalOf); 
+            GroupSelector = static group => group.Select(ObservableOf).Switch();
+        }
+    }
+
+
+    private static class KeepManyHelpers<T>
+    {
+        public static readonly Func<T, T> Identity = static a => a;
     }
 }

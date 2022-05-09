@@ -1,4 +1,4 @@
-﻿namespace Fills;
+namespace Fills;
 
 public readonly struct Hint<T>
 {
