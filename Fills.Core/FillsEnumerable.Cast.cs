@@ -8,9 +8,6 @@ public static partial class FillsEnumerableExtensions
     )
         where TResult : TElement
     {
-        foreach (var item in source)
-        {
-            yield return (TResult) item!;
-        }
+        return source.Select(static item => (TResult) item!);
     }
 }
