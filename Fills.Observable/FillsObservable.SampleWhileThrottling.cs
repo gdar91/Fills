@@ -10,11 +10,9 @@ public static partial class FillsObservableExtensions
         TimeSpan throttleDueTime
     )
     {
-        var timer = Observable.Timer(TimeSpan.Zero, sampleInterval);
-        var timerSelector = (TElement _) => timer;
-
         return observable.Publish(sharedObservable =>
         {
+            var timer = Observable.Timer(TimeSpan.Zero, sampleInterval);
             var windowClosings = sharedObservable.Throttle(throttleDueTime);
             var windowClosingsSelector = () => windowClosings;
 
@@ -24,7 +22,7 @@ public static partial class FillsObservableExtensions
                     window.Sample(
                         window
                             .DistinctUntilChanged(static _ => 0L)
-                            .Select(timerSelector)
+                            .Select(timer, static (timer, _) => timer)
                             .Append(Observable.Empty<long>())
                             .Switch()
                     )
