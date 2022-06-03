@@ -12,7 +12,7 @@ public static partial class FillsObservableExtensions
     {
         return observable.Publish(sharedObservable =>
         {
-            var timer = Observable.Timer(TimeSpan.Zero, sampleInterval);
+            var timer = Observable.Interval(sampleInterval).StartWith(0L);
             var windowClosings = sharedObservable.Throttle(throttleDueTime);
             var windowClosingsSelector = () => windowClosings;
 
