@@ -6,7 +6,7 @@ namespace Fills;
 
 public static partial class FillsObservableExtensions
 {
-    private static readonly BoundedChannelOptions boundedChannelOptionsOfOneDropOldest =
+    private static readonly BoundedChannelOptions BoundedChannelOptionsOfOneDropOldest =
         new(1) { FullMode = BoundedChannelFullMode.DropOldest };
 
 
@@ -82,7 +82,7 @@ public static partial class FillsObservableExtensions
             (source, arg, consumerObservableFactory),
             static async (arg, observer, cancellationToken) =>
             {
-                var channel = Channel.CreateBounded<TElement>(boundedChannelOptionsOfOneDropOldest);
+                var channel = Channel.CreateBounded<TElement>(BoundedChannelOptionsOfOneDropOldest);
 
                 var consumerSubscription =
                     Observable
@@ -98,17 +98,16 @@ public static partial class FillsObservableExtensions
 
                 try
                 {
-                    var producerTask =
-                        await arg.source
-                            .Select(
-                                channel,
-                                static (channel, element) =>
-                                    Observable.FromAsync(async cancellationToken =>
-                                        await channel.Writer.WriteAsync(element, cancellationToken)
-                                    )
-                            )
-                            .Concat()
-                            .ToTask(cancellationToken);
+                    await arg.source
+                        .Select(
+                            channel,
+                            static (channel, element) =>
+                                Observable.FromAsync(async cancellationToken =>
+                                    await channel.Writer.WriteAsync(element, cancellationToken)
+                                )
+                        )
+                        .Concat()
+                        .ToTask(cancellationToken);
 
                     channel.Writer.Complete();
                 }
