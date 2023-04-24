@@ -1,15 +1,15 @@
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 namespace Fills;
 
 
-internal sealed record ScanAsyncArgs<TArg, TElement, TAccumulate>(
+internal sealed record ScanAsyncArg<TArg, TElement, TAccumulate>(
     IObservable<TElement> Source,
     TArg Arg,
     Func<TArg, CancellationToken, Task<TAccumulate>> SeedTaskFunc,
-    Func<TArg, TAccumulate, TElement, TAccumulate> AccumulatorFunc,
-    Subject<long> Subject
+    Func<TArg, TAccumulate, TElement, TAccumulate> AccumulatorFunc
 );
 
 
@@ -23,60 +23,78 @@ public static partial class FillsObservableExtensions
     )
     {
         return
-            Observable.Using(
-                static () => new Subject<long>(),
-                subject =>
-                    FillsObservable.Create<ScanAsyncArgs<TArg, TElement, TAccumulate>, TAccumulate>(
-                        new(source, arg, seedTaskFunc, accumulatorFunc, subject),
-                        ScanAsyncSubscribe
-                    )
+            FillsObservable.Create(
+                new ScanAsyncArg<TArg, TElement, TAccumulate>(source, arg, seedTaskFunc, accumulatorFunc),
+                ScanAsyncSubscribe,
+                Hint.Of<TAccumulate>()
             );
     }
 
 
     private static async Task<IDisposable> ScanAsyncSubscribe<TArg, TElement, TAccumulate>(
-        ScanAsyncArgs<TArg, TElement, TAccumulate> arg,
+        ScanAsyncArg<TArg, TElement, TAccumulate> arg,
         IObserver<TAccumulate> observer,
         CancellationToken cancellationToken
     )
     {
-        TAccumulate seed = default!;
-
-        var subscription =
-            arg.Source
-                .DelayElementsUntil(arg.Subject)
-                .Publish(elements =>
-                    elements
-                        .Window(elements.Take(1), _ => elements.IgnoreElements())
-                        .SelectMany(window =>
-                            window
-                                .Scan(
-                                    (arg, accumulate: seed),
-                                    static (accumulate, element) =>
-                                    (
-                                        accumulate.arg,
-                                        accumulate.arg.AccumulatorFunc(
-                                            accumulate.arg.Arg,
-                                            accumulate.accumulate, element
-                                        )
-                                    )
-                                )
-                                .Select(arg => arg.accumulate)
-                        )
-                )
-                .Subscribe(observer);
+        var subject = new Subject<long>();
 
         try
         {
-            seed = await arg.SeedTaskFunc(arg.Arg, cancellationToken).ConfigureAwait(false);
+            var connectableObservable = arg.Source.DelayElementsUntil(subject).Publish();
 
-            arg.Subject.OnNext(default);
+            var connection = connectableObservable.Connect();
 
-            return subscription;
+            try
+            {
+                var seed = await arg.SeedTaskFunc(arg.Arg, cancellationToken).ConfigureAwait(false);
+
+                var subscription =
+                    connectableObservable
+                        .Scan(
+                            (arg, accumulate: seed),
+                            static (accumulate, element) =>
+                                (
+                                    accumulate.arg,
+                                    accumulate.arg.AccumulatorFunc(
+                                        accumulate.arg.Arg,
+                                        accumulate.accumulate, element
+                                    )
+                                )
+                        )
+                        .Select(static arg => arg.accumulate)
+                        .Subscribe(observer);
+
+                try
+                {
+                    subject.OnNext(default);
+
+                    return
+                        Disposable.Create(
+                            (subject, connection, subscription),
+                            static arg =>
+                            {
+                                using var subjectResource = arg.subject;
+                                using var connectionResource = arg.connection;
+                                using var subscriptionResource = arg.subscription;
+                            }
+                        );
+                }
+                catch
+                {
+                    using var subscriptionResource = subscription;
+                    throw;
+                }
+            }
+            catch
+            {
+                using var connectionResource = connection;
+                throw;
+            }
         }
         catch
         {
-            using var subscriptionResource = subscription;
+            using var subjectResource = subject;
             throw;
         }
     }
