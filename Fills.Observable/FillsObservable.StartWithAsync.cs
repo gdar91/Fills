@@ -5,35 +5,34 @@ using System.Reactive.Subjects;
 namespace Fills;
 
 
-internal sealed record ScanAsyncArg<TArg, TElement, TAccumulate>(
+internal readonly record struct StartWithAsyncArg<TArg, TElement, TAsyncValue, TResult>(
     IObservable<TElement> Source,
     TArg Arg,
-    Func<TArg, CancellationToken, Task<TAccumulate>> SeedTaskFunc,
-    Func<TAccumulate, TElement, TAccumulate> AccumulatorFunc
+    Func<TArg, CancellationToken, Task<TAsyncValue>> AsyncValueFunc,
+    Func<TArg, TAsyncValue, IObservable<TElement>, IObservable<TResult>> ObservableSelector
 );
 
 
 public static partial class FillsObservableExtensions
 {
-    public static IObservable<TAccumulate> ScanAsync<TArg, TElement, TAccumulate>(
+    public static IObservable<TResult> StartWithAsync<TArg, TElement, TAsyncValue, TResult>(
         this IObservable<TElement> source,
         TArg arg,
-        Func<TArg, CancellationToken, Task<TAccumulate>> seedTaskFunc,
-        Func<TAccumulate, TElement, TAccumulate> accumulatorFunc
+        Func<TArg, CancellationToken, Task<TAsyncValue>> asyncValueFunc,
+        Func<TArg, TAsyncValue, IObservable<TElement>, IObservable<TResult>> observableSelector
     )
     {
         return
-            FillsObservable.Create(
-                new ScanAsyncArg<TArg, TElement, TAccumulate>(source, arg, seedTaskFunc, accumulatorFunc),
-                ScanAsyncSubscribe,
-                Hint.Of<TAccumulate>()
+            FillsObservable.Create<StartWithAsyncArg<TArg, TElement, TAsyncValue, TResult>, TResult>(
+                new(source, arg, asyncValueFunc, observableSelector),
+                StartWithAsyncSubscribe
             );
     }
 
 
-    private static async Task<IDisposable> ScanAsyncSubscribe<TArg, TElement, TAccumulate>(
-        ScanAsyncArg<TArg, TElement, TAccumulate> arg,
-        IObserver<TAccumulate> observer,
+    private static async Task<IDisposable> StartWithAsyncSubscribe<TArg, TElement, TAsyncValue, TResult>(
+        StartWithAsyncArg<TArg, TElement, TAsyncValue, TResult> arg,
+        IObserver<TResult> observer,
         CancellationToken cancellationToken
     )
     {
@@ -47,12 +46,11 @@ public static partial class FillsObservableExtensions
 
             try
             {
-                var seed = await arg.SeedTaskFunc(arg.Arg, cancellationToken);
+                var asyncValue = await arg.AsyncValueFunc(arg.Arg, cancellationToken);
 
-                var subscription =
-                    connectableObservable
-                        .Scan(seed, arg.AccumulatorFunc)
-                        .Subscribe(observer);
+                var observable = arg.ObservableSelector(arg.Arg, asyncValue, connectableObservable);
+
+                var subscription = observable.Subscribe(observer);
 
                 try
                 {

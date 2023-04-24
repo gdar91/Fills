@@ -8,7 +8,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/gdar91/Fills</RepositoryUrl>
-    <Version>0.1.92</Version>
+    <Version>0.1.93</Version>
     <Description>Observable operators, that are missing in the standard library.</Description>
     <Authors>Giorgi Darchiashvili</Authors>
     <Company />
