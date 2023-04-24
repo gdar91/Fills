@@ -9,7 +9,7 @@ internal sealed record ScanAsyncArg<TArg, TElement, TAccumulate>(
     IObservable<TElement> Source,
     TArg Arg,
     Func<TArg, CancellationToken, Task<TAccumulate>> SeedTaskFunc,
-    Func<TArg, TAccumulate, TElement, TAccumulate> AccumulatorFunc
+    Func<TAccumulate, TElement, TAccumulate> AccumulatorFunc
 );
 
 
@@ -19,7 +19,7 @@ public static partial class FillsObservableExtensions
         this IObservable<TElement> source,
         TArg arg,
         Func<TArg, CancellationToken, Task<TAccumulate>> seedTaskFunc,
-        Func<TArg, TAccumulate, TElement, TAccumulate> accumulatorFunc
+        Func<TAccumulate, TElement, TAccumulate> accumulatorFunc
     )
     {
         return
@@ -47,22 +47,11 @@ public static partial class FillsObservableExtensions
 
             try
             {
-                var seed = await arg.SeedTaskFunc(arg.Arg, cancellationToken).ConfigureAwait(false);
+                var seed = await arg.SeedTaskFunc(arg.Arg, cancellationToken);
 
                 var subscription =
                     connectableObservable
-                        .Scan(
-                            (arg, accumulate: seed),
-                            static (accumulate, element) =>
-                                (
-                                    accumulate.arg,
-                                    accumulate.arg.AccumulatorFunc(
-                                        accumulate.arg.Arg,
-                                        accumulate.accumulate, element
-                                    )
-                                )
-                        )
-                        .Select(static arg => arg.accumulate)
+                        .Scan(seed, arg.AccumulatorFunc)
                         .Subscribe(observer);
 
                 try
