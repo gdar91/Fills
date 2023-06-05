@@ -1,6 +1,6 @@
 namespace Fills;
 
-public interface IKeyLookup<in TKey, out TValue>
+public interface IKeyLookup<TKey, out TValue>
 {
-    TValue this[TKey key] { get; }
+    TValue this[in TKey key] { get; }
 }
