@@ -86,6 +86,15 @@ public static partial class FillsObservableExtensions
 
     public static IObservable<TResult> TrySelect<TArg, TElement, TResult>(
         this IObservable<TElement> source,
+        in TArg arg,
+        TrySelector<TArg, TElement, TResult> trySelector
+    )
+    {
+        return new TrySelectObservable<TArg, TElement, TResult>(in arg, source, trySelector);
+    }
+
+    public static IObservable<TResult> TrySelect<TArg, TElement, TResult>(
+        this IObservable<TElement> source,
         TArg arg,
         TrySelector<TArg, TElement, TResult> trySelector,
         Hint<TResult> resultHint
@@ -94,8 +103,18 @@ public static partial class FillsObservableExtensions
         return new TrySelectObservable<TArg, TElement, TResult>(arg, source, trySelector);
     }
 
+    public static IObservable<TResult> TrySelect<TArg, TElement, TResult>(
+        this IObservable<TElement> source,
+        in TArg arg,
+        TrySelector<TArg, TElement, TResult> trySelector,
+        Hint<TResult> resultHint
+    )
+    {
+        return new TrySelectObservable<TArg, TElement, TResult>(in arg, source, trySelector);
+    }
 
-    private sealed class TrySelectObservable<TArg, TElement, TResult> : IObservable<TResult>
+
+    private sealed class TrySelectObservable<TArg, TElement, TResult> : IObservable<TResult>, IArgRef<TArg>
     {
         private readonly TArg arg;
 
@@ -114,6 +133,22 @@ public static partial class FillsObservableExtensions
             this.source = source;
             this.trySelector = trySelector;
         }
+
+        public TrySelectObservable(
+            in TArg arg,
+            IObservable<TElement> source,
+            TrySelector<TArg, TElement, TResult> trySelector
+        )
+        {
+            this.arg = arg;
+            this.source = source;
+            this.trySelector = trySelector;
+        }
+
+
+        public ref readonly TArg ArgRef => ref arg;
+
+        public TArg Arg => arg;
 
 
         public IDisposable Subscribe(IObserver<TResult> observer) => source.Subscribe(new Observer(this, observer));

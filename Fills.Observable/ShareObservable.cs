@@ -4,7 +4,7 @@ using System.Reactive.Subjects;
 
 namespace Fills;
 
-public sealed class ShareObservable<TArg, TElement> : IObservable<TElement>
+public sealed class ShareObservable<TArg, TElement> : IObservable<TElement>, IArgRef<TArg>
 {
     private readonly IObservable<TElement> source;
 
@@ -39,6 +39,29 @@ public sealed class ShareObservable<TArg, TElement> : IObservable<TElement>
         gate = new();
         state = State.Initial;
     }
+
+    public ShareObservable(
+        IObservable<TElement> source,
+        in TArg arg,
+        Func<TArg, ISubject<TElement>> subjectFactory,
+        TimeSpan disconnectDelay,
+        IScheduler disconnectScheduler
+    )
+    {
+        this.source = source;
+        this.arg = arg;
+        this.subjectFactory = subjectFactory;
+        this.disconnectDelay = disconnectDelay;
+        this.disconnectScheduler = disconnectScheduler;
+
+        gate = new();
+        state = State.Initial;
+    }
+
+
+    public ref readonly TArg ArgRef => ref arg;
+
+    public TArg Arg => arg;
 
 
     public IDisposable Subscribe(IObserver<TElement> observer)

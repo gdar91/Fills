@@ -14,6 +14,14 @@ public static partial class FillsObservable
     }
 
     public static IObservable<TElement> Create<TArg, TElement>(
+        in TArg arg,
+        Func<TArg, IObserver<TElement>, IDisposable> subscribe
+    )
+    {
+        return new CreateObservable<TArg, TElement>(in arg, subscribe);
+    }
+
+    public static IObservable<TElement> Create<TArg, TElement>(
         TArg arg,
         Func<TArg, IObserver<TElement>, IDisposable> subscribe,
         Hint<TElement> hint
@@ -22,8 +30,17 @@ public static partial class FillsObservable
         return new CreateObservable<TArg, TElement>(arg, subscribe);
     }
 
+    public static IObservable<TElement> Create<TArg, TElement>(
+        in TArg arg,
+        Func<TArg, IObserver<TElement>, IDisposable> subscribe,
+        Hint<TElement> hint
+    )
+    {
+        return new CreateObservable<TArg, TElement>(in arg, subscribe);
+    }
 
-    private sealed class CreateObservable<TArg, TElement> : ObservableBase<TElement>
+
+    private sealed class CreateObservable<TArg, TElement> : ObservableBase<TElement>, IArgRef<TArg>
     {
         private readonly TArg arg;
 
@@ -35,6 +52,17 @@ public static partial class FillsObservable
             this.arg = arg;
             this.subscribe = subscribe;
         }
+
+        public CreateObservable(in TArg arg, Func<TArg, IObserver<TElement>, IDisposable> subscribe)
+        {
+            this.arg = arg;
+            this.subscribe = subscribe;
+        }
+
+
+        public ref readonly TArg ArgRef => ref arg;
+
+        public TArg Arg => arg;
 
 
         protected override IDisposable SubscribeCore(IObserver<TElement> observer) => subscribe(arg, observer);
@@ -48,7 +76,15 @@ public static partial class FillsObservable
         Func<TArg, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync
     )
     {
-        return new CreateTaskObservable<TArg,TElement>(arg, subscribeAsync);
+        return new CreateTaskObservable<TArg, TElement>(arg, subscribeAsync);
+    }
+
+    public static IObservable<TElement> Create<TArg, TElement>(
+        in TArg arg,
+        Func<TArg, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync
+    )
+    {
+        return new CreateTaskObservable<TArg, TElement>(in arg, subscribeAsync);
     }
 
     public static IObservable<TElement> Create<TArg, TElement>(
@@ -57,11 +93,20 @@ public static partial class FillsObservable
         Hint<TElement> hint
     )
     {
-        return new CreateTaskObservable<TArg,TElement>(arg, subscribeAsync);
+        return new CreateTaskObservable<TArg, TElement>(arg, subscribeAsync);
+    }
+
+    public static IObservable<TElement> Create<TArg, TElement>(
+        in TArg arg,
+        Func<TArg, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync,
+        Hint<TElement> hint
+    )
+    {
+        return new CreateTaskObservable<TArg, TElement>(in arg, subscribeAsync);
     }
 
 
-    private sealed class CreateTaskObservable<TArg, TElement> : ObservableBase<TElement>
+    private sealed class CreateTaskObservable<TArg, TElement> : ObservableBase<TElement>, IArgRef<TArg>
     {
         private readonly TArg arg;
 
@@ -76,6 +121,20 @@ public static partial class FillsObservable
             this.arg = arg;
             this.subscribeAsync = subscribeAsync;
         }
+
+        public CreateTaskObservable(
+            in TArg arg,
+            Func<TArg, IObserver<TElement>, CancellationToken, Task<IDisposable>> subscribeAsync
+        )
+        {
+            this.arg = arg;
+            this.subscribeAsync = subscribeAsync;
+        }
+
+
+        public ref readonly TArg ArgRef => ref arg;
+
+        public TArg Arg => arg;
 
 
         protected override IDisposable SubscribeCore(IObserver<TElement> observer)

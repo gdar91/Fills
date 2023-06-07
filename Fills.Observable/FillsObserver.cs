@@ -93,7 +93,7 @@ public static class FillsObserver
     }
 
 
-    private sealed class CreateObserver<TArg, TElement> : ObserverBase<TElement>
+    private sealed class CreateObserver<TArg, TElement> : ObserverBase<TElement>, IArgRef<TArg>
     {
         private readonly TArg arg;
 
@@ -116,6 +116,24 @@ public static class FillsObserver
             this.onError = onError;
             this.onCompleted = onCompleted;
         }
+
+        public CreateObserver(
+            in TArg arg,
+            Action<TArg, TElement> onNext,
+            Action<TArg, Exception> onError,
+            Action<TArg> onCompleted
+        )
+        {
+            this.arg = arg;
+            this.onNext = onNext;
+            this.onError = onError;
+            this.onCompleted = onCompleted;
+        }
+
+
+        public ref readonly TArg ArgRef => ref arg;
+
+        public TArg Arg => arg;
 
 
         protected override void OnNextCore(TElement value) => onNext(arg, value);

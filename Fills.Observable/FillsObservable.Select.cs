@@ -12,7 +12,17 @@ public static partial class FillsObservableExtensions
     }
 
 
-    private sealed class SelectObservable<TArg, TElement, TResult> : IObservable<TResult>
+    public static IObservable<TResult> Select<TArg, TElement, TResult>(
+        this IObservable<TElement> source,
+        in TArg arg,
+        Func<TArg, TElement, TResult> selector
+    )
+    {
+        return new SelectObservable<TArg, TElement, TResult>(in arg, source, selector);
+    }
+
+
+    private sealed class SelectObservable<TArg, TElement, TResult> : IObservable<TResult>, IArgRef<TArg>
     {
         private readonly TArg arg;
 
@@ -28,10 +38,22 @@ public static partial class FillsObservableExtensions
             this.selector = selector;
         }
 
+        public SelectObservable(in TArg arg, IObservable<TElement> source, Func<TArg, TElement, TResult> selector)
+        {
+            this.arg = arg;
+            this.source = source;
+            this.selector = selector;
+        }
+
+
+        public ref readonly TArg ArgRef => ref arg;
+
+        public TArg Arg => arg;
+
 
         public IDisposable Subscribe(IObserver<TResult> observer) => source.Subscribe(new Observer(this, observer));
 
-    
+
         private sealed class Observer : IObserver<TElement>
         {
             private readonly SelectObservable<TArg, TElement, TResult> parent;
