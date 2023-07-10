@@ -46,7 +46,7 @@ public static partial class FillsObservableExtensions
 
             try
             {
-                var asyncValue = await arg.AsyncValueFunc(arg.Arg, cancellationToken);
+                var asyncValue = await arg.AsyncValueFunc(arg.Arg, cancellationToken).ConfigureAwait(false);
 
                 var observable = arg.ObservableSelector(arg.Arg, asyncValue, connectableObservable);
 

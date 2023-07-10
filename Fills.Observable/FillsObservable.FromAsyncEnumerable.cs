@@ -13,9 +13,12 @@ public static partial class FillsObservable
                 asyncEnumerableFactory,
                 static async (asyncEnumerableFactory, observer, cancellationToken) =>
                 {
-                    var asyncEnumerable = asyncEnumerableFactory(cancellationToken);
+                    var asyncEnumerable =
+                        asyncEnumerableFactory(cancellationToken)
+                            .WithCancellation(cancellationToken)
+                            .ConfigureAwait(false);
 
-                    await foreach (var item in asyncEnumerable.WithCancellation(cancellationToken))
+                    await foreach (var item in asyncEnumerable)
                     {
                         observer.OnNext(item);
                     }
@@ -37,11 +40,15 @@ public static partial class FillsObservable
         return
             Create(
                 (arg, asyncEnumerableFactory),
-                static async (tuple, observer, cancellationToken) =>
+                static async (arg, observer, cancellationToken) =>
                 {
-                    var asyncEnumerable = tuple.asyncEnumerableFactory(tuple.arg, cancellationToken);
+                    var asyncEnumerable =
+                        arg
+                            .asyncEnumerableFactory(arg.arg, cancellationToken)
+                            .WithCancellation(cancellationToken)
+                            .ConfigureAwait(false);
 
-                    await foreach (var item in asyncEnumerable.WithCancellation(cancellationToken))
+                    await foreach (var item in asyncEnumerable)
                     {
                         observer.OnNext(item);
                     }
