@@ -21,14 +21,36 @@ public static partial class FillsObservableExtensions
 
     public static ChannelReader<T> RunAsChannelReader<T>(
         this IObservable<T> source,
+        Channel<T> channel,
         CancellationToken cancellationToken
     )
     {
-        var channel = Channel.CreateUnbounded<T>();
-
         _ = StartProducer(source, channel.Writer, cancellationToken);
 
         return channel.Reader;
+    }
+
+
+    public static ChannelReader<T> RunAsChannelReader<T>(
+        this IObservable<T> source,
+        CancellationToken cancellationToken
+    )
+    {
+        return RunAsChannelReader(source, Channel.CreateUnbounded<T>(), cancellationToken);
+    }
+
+
+    public static ChannelReader<T> RunAsChannelReaderBounded<T>(
+        this IObservable<T> source,
+        CancellationToken cancellationToken
+    )
+    {
+        return
+            RunAsChannelReader(
+                source,
+                Channel.CreateBounded<T>(BoundedChannelOptionsOfOneDropOldest),
+                cancellationToken
+            );
     }
 
 
@@ -217,6 +239,8 @@ public static partial class FillsObservableExtensions
         CancellationToken cancellationToken
     )
     {
+        Exception? localException = null;
+
         try
         {
             await observable
@@ -231,12 +255,14 @@ public static partial class FillsObservableExtensions
                 .Concat()
                 .ToTask(cancellationToken)
                 .ConfigureAwait(false);
-
-            channelWriter.Complete();
         }
         catch (Exception e)
         {
-            channelWriter.Complete(e);
+            localException = e;
+        }
+        finally
+        {
+            channelWriter.Complete(localException);
         }
     }
 }
