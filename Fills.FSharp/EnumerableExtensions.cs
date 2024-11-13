@@ -1,4 +1,5 @@
 using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 
 namespace Fills;
 
@@ -62,4 +63,85 @@ public static class EnumerableExtensions
 
     public static FSharpMap<TKey, TValue> ToFSharpMap<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) =>
         MapModule.OfSeq(dictionary.Select(static keyValuePair => Tuple.Create(keyValuePair.Key, keyValuePair.Value)));
+
+
+
+
+    public static IEnumerable<TResult> TrySelect<TElement, TResult>(
+        this IEnumerable<TElement> source,
+        Func<TElement, FSharpOption<TResult>> trySelector
+    )
+    {
+        foreach (var item in source)
+        {
+            if (trySelector(item).TryGetValue(out var result))
+            {
+                yield return result;
+            }
+        }
+    }
+
+    public static IEnumerable<TResult> TrySelect<TArg, TElement, TResult>(
+        this IEnumerable<TElement> source,
+        TArg arg,
+        Func<TArg, TElement, FSharpOption<TResult>> trySelector
+    )
+    {
+        foreach (var item in source)
+        {
+            if (trySelector(arg, item).TryGetValue(out var result))
+            {
+                yield return result;
+            }
+        }
+    }
+
+
+    public static IEnumerable<TResult> TrySelect<TElement, TResult>(
+        this IEnumerable<TElement> source,
+        Func<TElement, FSharpValueOption<TResult>> trySelector
+    )
+    {
+        foreach (var item in source)
+        {
+            if (trySelector(item).TryGetValue(out var result))
+            {
+                yield return result;
+            }
+        }
+    }
+
+    public static IEnumerable<TResult> TrySelect<TArg, TElement, TResult>(
+        this IEnumerable<TElement> source,
+        TArg arg,
+        Func<TArg, TElement, FSharpValueOption<TResult>> trySelector
+    )
+    {
+        foreach (var item in source)
+        {
+            if (trySelector(arg, item).TryGetValue(out var result))
+            {
+                yield return result;
+            }
+        }
+    }
+
+
+
+
+    public static bool TryHead<TElement>(this IEnumerable<TElement> source, out TElement head)
+    {
+        using var enumerator = source.GetEnumerator();
+
+        if (enumerator.MoveNext())
+        {
+            head = enumerator.Current;
+
+            return true;
+        }
+
+        head = default!;
+
+        return false;
+    }
 }

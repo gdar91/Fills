@@ -1,8 +1,6 @@
 namespace Fills;
 
-public readonly struct Hint<T>
-{
-}
+public readonly struct Hint<T>;
 
 
 public static partial class Hint

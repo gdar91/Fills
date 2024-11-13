@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>13</LangVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl></PackageProjectUrl>
+    <PackageProjectUrl />
     <RepositoryUrl>https://github.com/gdar91/Fills</RepositoryUrl>
-    <Version>0.2.6</Version>
+    <Version>0.2.7</Version>
     <Description>Type hinting engine and IEnumerable operators, that are missing in the standard library.</Description>
     <Authors>Giorgi Darchiashvili</Authors>
     <Company />
